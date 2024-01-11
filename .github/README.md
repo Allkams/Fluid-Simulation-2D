@@ -10,7 +10,7 @@ A fairly powerful computer, but feel free to try the limits of what this can run
 Visual Studio Community, 2022 or newer
 
 ## Legal Information  
-The base of this project is a fork of Sumo Digital Limited (Spyder™) repo called Playbuffer.
+The base of this project is a fork of Sumo Digital Limited (Spyder™) repo called [Playbuffer](https://github.com/sumo-digital-academy/playbuffer?tab=readme-ov-file).
 For my own part is this just a test to see how everything works in 2D. The real deal and whats for me would matter is my 3D repo which is built using my spectra-wise engine. So what this repo gets used for is in the hands of the reader as long as you follow the Legal section of playbuffer.
 
 ![](/.github/images/playbuffer_title.png)
