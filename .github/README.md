@@ -6,7 +6,7 @@ A good question to ask is why I do this. And well, to be honest, fluids is just 
 But the biggest reason is just to expand my knowledge in both programming and physics to see what innovative things that could be done to maybe, in a short future, have real time physics based water simulations in games.
 
 ## Required specs and similar
-A fairly powerful computer, but feel free to try the limits of what this can run on. Windows required
+A fairly powerful computer, but feel free to try the limits of what this can run on. Windows required  
 Visual Studio
 
 ## Legal Information  
