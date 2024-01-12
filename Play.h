@@ -41,6 +41,7 @@
 #include <filesystem>
 #include <thread>
 #include <future>
+#include <cassert>
 
 #define WIN32_LEAN_AND_MEAN // Exclude rarely-used content from the Windows headers
 #define NOMINMAX // Stop windows macros defining their own min and max macros
@@ -909,7 +910,7 @@ inline void Matrix2D::Inverse()
 struct Pixel
 {
 	Pixel() {}
-	Pixel( uint32_t bits ) : bits( bits ) {}
+	Pixel( const uint32_t& bits ) : bits( bits ) {}
 	Pixel( float r, float g, float b ) :
 		a( 0xFF ), r( static_cast<uint8_t>( r ) ), g( static_cast<uint8_t>( g ) ), b( static_cast<uint8_t>( b ) )
 	{
@@ -1108,7 +1109,7 @@ public:
 	// > Setting alphaMultiply < 1 is not much slower overall (~10% slower) 
 	void TransformPixels( const PixelData& srcPixelData, int srcFrameOffset, int srcWidth, int srcHeight, const Point2f& origin, const Matrix2D& m, float alphaMultiply = 1.0f ) const;
 	// Clears the render target using the given pixel colour
-	void ClearRenderTarget( Pixel colour ) const;
+	void ClearRenderTarget( const Pixel& colour ) const;
 	// Copies a background image of the correct size to the render target
 	void BlitBackground( PixelData& backgroundImage ) const;
 
@@ -1154,6 +1155,8 @@ public:
 	void DrawRect( Point2f topLeft, Point2f bottomRight, Pixel pix, bool fill = false );
 	// Draws a circle into the display buffer
 	void DrawCircle( Point2f centrePos, int radius, Pixel pix );
+
+	void DrawFilledCircle(Point2f centrePos, int radius, Pixel pix);
 	// Draws raw pixel data to the display buffer
 	// > Pre-multiplies the alpha on the image data if this hasn't been done before
 	void DrawPixelData( PixelData* pixelData, Point2f pos, float alpha = 1.0f );
@@ -1272,7 +1275,7 @@ public:
 	// Gets the duration (in milliseconds) of a specific timing segment
 	float GetTimingSegmentDuration( int id ) const;
 	// Clears the display buffer using the given pixel colour
-	void ClearBuffer( Pixel colour ) { m_blitter.ClearRenderTarget( colour ); }
+	void ClearBuffer( const Pixel colour ) { m_blitter.ClearRenderTarget( colour ); }
 	// Sets the render target for drawing operations
 	PixelData* SetRenderTarget( PixelData* renderTarget ) { return m_blitter.SetRenderTarget( renderTarget ); }
 
@@ -1545,9 +1548,9 @@ namespace Play
 	// PlayManager uses colour values from 0-100 for red, green, blue and alpha
 	struct Colour
 	{
-		Colour( float r, float g, float b ) : red( r ), green( g ), blue( b ) {}
-		Colour( int r, int g, int b ) : red( static_cast<float>( r ) ), green( static_cast<float>( g ) ), blue( static_cast<float>( b ) ) {}
-		float red, green, blue;
+		Colour( short r, short g, short b ) : red( r ), green( g ), blue( b ) {}
+		Colour( int r, int g, int b ) : red( static_cast<short>( r ) ), green( static_cast<short>( g ) ), blue( static_cast<short>( b ) ) {}
+		short red, green, blue;
 	};
 
 	extern Colour cBlack, cRed, cGreen, cBlue, cMagenta, cCyan, cYellow, cOrange, cWhite, cGrey;
@@ -1601,7 +1604,7 @@ namespace Play
 	//**************************************************************************************************
 
 	// Clears the display buffer using the colour provided
-	void ClearDrawingBuffer( Colour col );
+	void ClearDrawingBuffer( const Colour& col );
 	// Loads a PNG file as the background image for the window
 	int LoadBackground( const char* pngFilename );
 	// Draws the background image previously loaded with Play::LoadBackground() into the drawing buffer
@@ -2404,8 +2407,7 @@ PlayBlitter::PlayBlitter( PixelData* pRenderTarget )
 
 void PlayBlitter::DrawPixel( int posX, int posY, Pixel srcPix ) const
 {
-	if( srcPix.a == 0x00 || posX < 0 || posX >= m_pRenderTarget->width || posY < 0 || posY >= m_pRenderTarget->height )
-		return;
+	assert(!(srcPix.a == 0x00 || posX < 0 || posX >= m_pRenderTarget->width || posY < 0 || posY >= m_pRenderTarget->height));
 
 	Pixel* destPix = &m_pRenderTarget->pPixels[( posY * m_pRenderTarget->width ) + posX];
 
@@ -2752,11 +2754,23 @@ void PlayBlitter::TransformPixels( const PixelData& srcPixelData, int srcFrameOf
 	}
 }
 
-
-void PlayBlitter::ClearRenderTarget( Pixel colour ) const
+void PlayBlitter::ClearRenderTarget( const Pixel& colour ) const
 {
-	Pixel* pBuffEnd = m_pRenderTarget->pPixels + ( m_pRenderTarget->width * m_pRenderTarget->height );
-	for( Pixel* pBuff = m_pRenderTarget->pPixels; pBuff < pBuffEnd; *pBuff++ = colour.bits );
+	constexpr int WindowSize = 1920 * 1080;
+	static bool isBufferInitialized = false;
+	static Pixel staticBuffer[WindowSize];
+
+	if (!isBufferInitialized)
+	{
+		for (int i = 0; i < WindowSize; ++i)
+		{
+			staticBuffer[i] = colour.bits;
+		}
+		isBufferInitialized = true;
+	}
+
+	size_t bufferSize = m_pRenderTarget->width * m_pRenderTarget->height * sizeof(Pixel);
+	memcpy(m_pRenderTarget->pPixels, staticBuffer, bufferSize);
 	m_pRenderTarget->preMultiplied = false;
 }
 
@@ -4015,16 +4029,16 @@ namespace Play
 #endif 
 
 	// A set of default colour definitions
-	Colour cBlack{ 0.0f, 0.0f, 0.0f };
-	Colour cRed{ 100.0f, 0.0f, 0.0f };
-	Colour cGreen{ 0.0f, 100.0f, 0.0f };
-	Colour cBlue{ 0.0f, 0.0f, 100.0f };
-	Colour cMagenta{ 100.0f, 0.0f, 100.0f };
-	Colour cCyan{ 0.0f, 100.0f, 100.0f };
-	Colour cYellow{ 100.0f, 100.0f, 0.0f };
-	Colour cOrange{ 100.0f, 50.0f, 0.0f };
-	Colour cWhite{ 100.0f, 100.0f, 100.0f };
-	Colour cGrey{ 50.0f, 50.0f, 50.0f };
+	Colour cBlack{ 0, 0, 0 };
+	Colour cRed{ 100, 0, 0 };
+	Colour cGreen{ 0, 100, 0 };
+	Colour cBlue{ 0, 0, 100 };
+	Colour cMagenta{ 100, 0, 100 };
+	Colour cCyan{ 0, 100, 100 };
+	Colour cYellow{ 100, 100, 0 };
+	Colour cOrange{ 100, 50, 0 };
+	Colour cWhite{ 100, 100, 100 };
+	Colour cGrey{ 50, 50, 50 };
 
 	int frameCount = 0; // Updated in Play::Present
 
@@ -4076,11 +4090,11 @@ namespace Play
 	// PlayGraphics functions
 	//**************************************************************************************************
 
-	void ClearDrawingBuffer( Colour c )
+	void ClearDrawingBuffer( const Colour& c )
 	{
-		int r = static_cast<int>( c.red * 2.55f );
-		int g = static_cast<int>( c.green * 2.55f );
-		int b = static_cast<int>( c.blue * 2.55f );
+		const int r = static_cast<int>( c.red * 2.55f );
+		const int g = static_cast<int>( c.green * 2.55f );
+		const int b = static_cast<int>( c.blue * 2.55f );
 		PlayGraphics::Instance().ClearBuffer( { r, g, b } );
 	}
 
@@ -4123,35 +4137,35 @@ namespace Play
 
 			drawSpace = WORLD;
 
-#ifdef PLAY_USING_GAMEOBJECT_MANAGER
-			
-			for( std::pair<const int, GameObject&>& i : objectMap )
-			{
-				GameObject& obj = i.second;
-				int id = obj.spriteId;
-				Vector2D size = pblt.GetSpriteSize( obj.spriteId );
-				Vector2D origin = pblt.GetSpriteOrigin( id );
-
-				// Corners of sprite drawing area
-				Point2D p0 = obj.pos - origin;
-				Point2D p2 = { obj.pos.x + size.width - origin.x, obj.pos.y + size.height - origin.y };
-				Point2D p1 = { p2.x, p0.y };
-				Point2D p3 = { p0.x, p2.y };
-
-				DrawLine( p0, p1, cRed );
-				DrawLine( p1, p2, cRed );
-				DrawLine( p2, p3, cRed );
-				DrawLine( p3, p0, cRed );
-
-				DrawCircle( obj.pos, obj.radius, cBlue );
-
-				DrawLine( { obj.pos.x - 20,  obj.pos.y - 20 }, { obj.pos.x + 20, obj.pos.y + 20 }, cWhite );
-				DrawLine( { obj.pos.x + 20, obj.pos.y - 20 }, { obj.pos.x - 20, obj.pos.y + 20 }, cWhite );
-
-				s = pblt.GetSpriteName( obj.spriteId ) + " f[" + std::to_string( obj.frame % pblt.GetSpriteFrames( obj.spriteId ) ) + "]";
-				DrawDebugText( { ( p0.x + p1.x ) / 2.0f, p0.y - 20 }, s.c_str() );
-			}
-#endif
+//#ifdef PLAY_USING_GAMEOBJECT_MANAGER
+//			
+//			for( std::pair<const int, GameObject&>& i : objectMap )
+//			{
+//				GameObject& obj = i.second;
+//				int id = obj.spriteId;
+//				Vector2D size = pblt.GetSpriteSize( obj.spriteId );
+//				Vector2D origin = pblt.GetSpriteOrigin( id );
+//
+//				// Corners of sprite drawing area
+//				Point2D p0 = obj.pos - origin;
+//				Point2D p2 = { obj.pos.x + size.width - origin.x, obj.pos.y + size.height - origin.y };
+//				Point2D p1 = { p2.x, p0.y };
+//				Point2D p3 = { p0.x, p2.y };
+//
+//				DrawLine( p0, p1, cRed );
+//				DrawLine( p1, p2, cRed );
+//				DrawLine( p2, p3, cRed );
+//				DrawLine( p3, p0, cRed );
+//
+//				DrawCircle( obj.pos, obj.radius, cBlue );
+//
+//				DrawLine( { obj.pos.x - 20,  obj.pos.y - 20 }, { obj.pos.x + 20, obj.pos.y + 20 }, cWhite );
+//				DrawLine( { obj.pos.x + 20, obj.pos.y - 20 }, { obj.pos.x - 20, obj.pos.y + 20 }, cWhite );
+//
+//				s = pblt.GetSpriteName( obj.spriteId ) + " f[" + std::to_string( obj.frame % pblt.GetSpriteFrames( obj.spriteId ) ) + "]";
+//				DrawDebugText( { ( p0.x + p1.x ) / 2.0f, p0.y - 20 }, s.c_str() );
+//			}
+//#endif
 		}
 
 		PlayWindow::Instance().Present();
@@ -4362,6 +4376,23 @@ namespace Play
 	void DrawCircle( Point2D pos, int radius, Colour c )
 	{
 		PlayGraphics::Instance().DrawCircle( TRANSFORM_SPACE( pos ), radius, { c.red * 2.55f, c.green * 2.55f, c.blue * 2.55f } );
+	}
+
+	void DrawFilledCircle(const Point2f& centre, const short radius)
+	{
+		//const Pixel pixel = { c.red * 2.55f, c.green * 2.55f, c.blue * 2.55f };
+
+		for (short x = -radius; x < radius; x++)
+		{
+			for (short y = -radius; y < radius; y++)
+			{
+				if (x * x + y * y < radius * radius)
+				{
+					const Point2f position = centre + Point2f(x, y);
+					PlayGraphics::Instance().DrawPixel(position, PIX_RED);
+				}
+			}
+		}
 	}
 
 	void DrawRect( Point2D topLeft, Point2D bottomRight, Colour c, bool fill )

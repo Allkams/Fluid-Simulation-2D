@@ -3,15 +3,35 @@
 #include "Play.h"
 #include "Simulation.h"
 
-int DISPLAY_WIDTH = 640;
-int DISPLAY_HEIGHT = 360;
-int DISPLAY_SCALE = 2;
+const int DISPLAY_WIDTH = 1920;
+const int DISPLAY_HEIGHT = 1080;
+const int DISPLAY_SCALE = 1;
 
-float dt = 0.016667f;
+double dt = 0.016667;
+
+double Max = 0.0;
+double Min = 100.0;
+
+std::vector<Point2f> positions;
+int size = 0;
+
+const short radius = 5;
+const short gap = 10;
 
 // The entry point for a PlayBuffer program
 void MainGameEntry( PLAY_IGNORE_COMMAND_LINE )
 {
+	for (int i = -50; i < 50; i++)
+	{
+		int x = (DISPLAY_WIDTH / 2.0f) + (gap * i);
+		for (int j = -50; j < 50; j++)
+		{
+			int y = (DISPLAY_HEIGHT / 2.0f) + (gap * j);
+			positions.push_back({ x , y });
+			size++;
+		}
+	}
+
 	Play::CreateManager( DISPLAY_WIDTH, DISPLAY_HEIGHT, DISPLAY_SCALE );
 }
 
@@ -22,15 +42,41 @@ bool MainGameUpdate( float elapsedTime )
 	Play::ClearDrawingBuffer( Play::cBlack );
 
 	//Simulation
-	Fluid::Simulation::getInstance().Update(dt);
-	Play::DrawCircle();
+	//Fluid::Simulation::getInstance().Update(dt);
+
+	auto timeStartOld = std::chrono::steady_clock::now();
+
+	for (int i = 0; i < positions.size(); i++)
+	{
+		Play::DrawFilledCircle(positions[i], radius);
+	}
+
+	auto timeEndOld = std::chrono::steady_clock::now();
+
+	double elapseOld = std::chrono::duration<double>(timeEndOld - timeStartOld).count();
+
+	if (elapseOld < Min)
+	{
+		Min = elapseOld;
+	}
+	if (elapseOld > Max)
+	{
+		Max = elapseOld;
+	}
 
 	int fps = 1 / dt;
 	std::string text = "fps: " + std::to_string(fps);
 	std::string textdt = "DT: " + std::to_string(dt);
+	std::string textNew = "Elapsed function: " + std::to_string(elapseOld);
+	std::string textMin = "Min time: " + std::to_string(Min);
+	std::string textMax = "Max time: " + std::to_string(Max);
 
 	Play::DrawDebugText({ 10, 10 }, text.c_str(), fps < 25 ? Play::cRed : Play::cWhite, false);
-	Play::DrawDebugText( { 10, 25 }, textdt.c_str(), fps < 25 ? Play::cRed : Play::cWhite, false);
+	Play::DrawDebugText({ 10, 25 }, textdt.c_str(), fps < 25 ? Play::cRed : Play::cWhite, false);
+
+	Play::DrawDebugText({ 10, DISPLAY_HEIGHT - 25 }, textNew.c_str(), fps < 25 ? Play::cRed : Play::cWhite, false);
+	Play::DrawDebugText({ 225, DISPLAY_HEIGHT - 25 }, textMin.c_str(), fps < 25 ? Play::cRed : Play::cWhite, false);
+	Play::DrawDebugText({ 400, DISPLAY_HEIGHT - 25 }, textMax.c_str(), fps < 25 ? Play::cRed : Play::cWhite, false);
 
 	Play::DrawDebugText({ DISPLAY_WIDTH / 2, 10 }, "Fluid Simulation By Alexander Marklund (Allkams)!");
 	Play::DrawDebugText({ DISPLAY_WIDTH / 2, 25 }, "Created with Playbuffer");
@@ -38,6 +84,7 @@ bool MainGameUpdate( float elapsedTime )
 	Play::PresentDrawingBuffer();
 	auto timeEnd = std::chrono::steady_clock::now();
 	dt = std::chrono::duration<double>(timeEnd - timeStart).count();
+
 	return Play::KeyDown( VK_ESCAPE );
 }
 
