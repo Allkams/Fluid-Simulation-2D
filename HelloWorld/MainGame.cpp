@@ -15,16 +15,16 @@ double Min = 100.0;
 std::vector<Point2f> positions;
 int size = 0;
 
-const short radius = 5;
-const short gap = 10;
+const int ammountPerXY = 100;
+const short gap = 7;
 
 // The entry point for a PlayBuffer program
 void MainGameEntry( PLAY_IGNORE_COMMAND_LINE )
 {
-	for (int i = -50; i < 50; i++)
+	for (int i = -ammountPerXY/2; i < ammountPerXY / 2; i++)
 	{
 		int x = (DISPLAY_WIDTH / 2.0f) + (gap * i);
-		for (int j = -50; j < 50; j++)
+		for (int j = -ammountPerXY / 2; j < ammountPerXY / 2; j++)
 		{
 			int y = (DISPLAY_HEIGHT / 2.0f) + (gap * j);
 			positions.push_back({ x , y });
@@ -48,7 +48,7 @@ bool MainGameUpdate( float elapsedTime )
 
 	for (int i = 0; i < positions.size(); i++)
 	{
-		Play::DrawFilledCircle(positions[i], radius);
+		Play::FastDrawFilledCircle(positions[i], Play::cRed);
 	}
 
 	auto timeEndOld = std::chrono::steady_clock::now();

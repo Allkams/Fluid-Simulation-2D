@@ -1105,6 +1105,7 @@ public:
 	// Draws pixel data to the render target using a direct copy
 	// > Setting alphaMultiply < 1 forces a less optimal rendering approach (~50% slower) 
 	void BlitPixels( const PixelData& srcImage, int srcOffset, int blitX, int blitY, int blitWidth, int blitHeight, float alphaMultiply ) const;
+	void FastBlitPixels(const PixelData& srcPixelData, int srcOffset, int blitX, int blitY, int blitWidth, int blitHeight, float alphaMultiply) const;
 	// Draws rotated and scaled pixel data to the render target (much slower than BlitPixels)
 	// > Setting alphaMultiply < 1 is not much slower overall (~10% slower) 
 	void TransformPixels( const PixelData& srcPixelData, int srcFrameOffset, int srcWidth, int srcHeight, const Point2f& origin, const Matrix2D& m, float alphaMultiply = 1.0f ) const;
@@ -2633,6 +2634,41 @@ void PlayBlitter::BlitPixels( const PixelData& srcPixelData, int srcOffset, int 
 	return;
 }
 
+void PlayBlitter::FastBlitPixels(const PixelData& srcPixelData, int srcOffset, int blitX, int blitY, int blitWidth, int blitHeight, float alphaMultiply) const
+{
+
+	const int destOffset = (m_pRenderTarget->width * blitY) + blitX;
+	uint32_t* destPixels = &m_pRenderTarget->pPixels->bits + destOffset;
+
+	const int srcClipOffset = srcPixelData.width;
+	const uint32_t* srcPixels = &srcPixelData.pPixels->bits + srcOffset + srcClipOffset;
+
+	const int destInc = m_pRenderTarget->width - blitWidth;
+	const int srcInc = srcPixelData.width - blitWidth;
+
+	const int destColOffset = (m_pRenderTarget->width * (blitHeight - 2)) + blitWidth;
+	const uint32_t* destColEnd = destPixels + destColOffset;
+
+	const int endRow = blitWidth;
+
+	while (destPixels < destColEnd)
+	{
+		const uint32_t* destRowEnd = destPixels + endRow;
+
+		while (destPixels < destRowEnd)
+		{
+			uint32_t src = *srcPixels++;
+			uint32_t dest = *destPixels;
+
+			dest = (((dest >> 4) & 0x000F0F0F) * (src >> 28));
+			*destPixels++ = (src + dest) | 0xFF000000;
+		}
+
+		destPixels += destInc;
+		srcPixels += srcInc;
+	}
+}
+
 //********************************************************************************************************************************
 // Function:	TransformPixels - draws the image data transforming each screen pixel into image space
 // Parameters:	srcPixelData = the pixel data you want to draw
@@ -3633,7 +3669,7 @@ void PlayGraphics::DrawPixelData( PixelData* pixelData, Point2f pos, float alpha
 		PreMultiplyAlpha( pixelData->pPixels, pixelData->pPixels, pixelData->width, pixelData->height, pixelData->width );
 		pixelData->preMultiplied = true;
 	}
-	m_blitter.BlitPixels( *pixelData, 0, static_cast<int>(pos.x), static_cast<int>(pos.y), pixelData->width, pixelData->height, alpha );
+	m_blitter.FastBlitPixels( *pixelData, 0, static_cast<int>(pos.x), static_cast<int>(pos.y), pixelData->width, pixelData->height, alpha );
 }
 
 
@@ -4378,6 +4414,24 @@ namespace Play
 		PlayGraphics::Instance().DrawCircle( TRANSFORM_SPACE( pos ), radius, { c.red * 2.55f, c.green * 2.55f, c.blue * 2.55f } );
 	}
 
+	void DrawFilledCircleOrginal(Point2f centre, short radius, Colour c)
+	{
+		Point2f start = Point2f(centre.x - radius, centre.y - radius);
+
+		for (int x = 0; x < 2 * radius; x++)
+		{
+			for (int y = 0; y < 2 * radius; y++)
+			{
+				Point2f pixelPosition = start + Point2f(x, y);
+
+				if (abs(length(centre - pixelPosition)) < radius)
+				{
+					PlayGraphics::Instance().DrawPixel(pixelPosition, { c.red * 2.55f, c.green * 2.55f, c.blue * 2.55f });
+				}
+			}
+		}
+	}
+
 	void DrawFilledCircle(const Point2f& centre, const short radius)
 	{
 		//const Pixel pixel = { c.red * 2.55f, c.green * 2.55f, c.blue * 2.55f };
@@ -4393,6 +4447,43 @@ namespace Play
 				}
 			}
 		}
+	}
+
+	void FastDrawFilledCircle(const Point2f& centre, const Colour& c)
+	{
+		static bool initialized = false;
+		static PixelData circle;
+		const short radius = 3;
+		const short diameter = radius * 2;
+
+		if (!initialized)
+		{
+			const Pixel pixel = { c.red * 2.55f, c.green * 2.55f, c.blue * 2.55f };
+			circle.pPixels = new Pixel[diameter * diameter];
+
+			for (int i = 0; i < diameter * diameter; i++)
+			{
+				int x = i % diameter - radius;
+				int y = i / diameter - radius;
+
+				if (x * x + y * y < radius * radius)
+				{
+					circle.pPixels[i] = pixel.bits;
+				}
+				else
+				{
+					circle.pPixels[i] = 0;
+				}
+			}
+
+			circle.width = diameter;
+			circle.height = diameter;
+
+			initialized = true;
+		}
+
+		PlayGraphics::Instance().DrawPixelData(&circle, centre);
+
 	}
 
 	void DrawRect( Point2D topLeft, Point2D bottomRight, Colour c, bool fill )
