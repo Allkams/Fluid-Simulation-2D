@@ -11,7 +11,8 @@ namespace Fluid
 		void Update(float deltaTime);
 		void HandleInput();
 
-		void AddCircle();
+		void AddCircle(uint32_t cID);
+		void SetBoundries(const Vector2f& topLeft, const Vector2f& bottomright);
 		void initCircleAmount(int Ammount);
 
 	private:
@@ -23,9 +24,10 @@ namespace Fluid
 
 		float global_DT;
 
-		std::vector<int> circleIDs;
-		std::vector<Vector2D> velocities;
-		std::vector<float> densities;
+		std::vector<uint32_t> circleIDs;
+		//std::vector<Vector2f> positions;
+		//std::vector<Vector2f> velocities;
+		//std::vector<float> densities;
 	private:
 		Simulation() {};
 		Simulation(const Simulation& other) = delete;

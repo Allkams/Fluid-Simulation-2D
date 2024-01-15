@@ -2792,21 +2792,9 @@ void PlayBlitter::TransformPixels( const PixelData& srcPixelData, int srcFrameOf
 
 void PlayBlitter::ClearRenderTarget( const Pixel& colour ) const
 {
-	constexpr int WindowSize = 1920 * 1080;
-	static bool isBufferInitialized = false;
-	static Pixel staticBuffer[WindowSize];
-
-	if (!isBufferInitialized)
-	{
-		for (int i = 0; i < WindowSize; ++i)
-		{
-			staticBuffer[i] = colour.bits;
-		}
-		isBufferInitialized = true;
-	}
 
 	size_t bufferSize = m_pRenderTarget->width * m_pRenderTarget->height * sizeof(Pixel);
-	memcpy(m_pRenderTarget->pPixels, staticBuffer, bufferSize);
+	memset(m_pRenderTarget->pPixels, 0, bufferSize);
 	m_pRenderTarget->preMultiplied = false;
 }
 
@@ -4453,7 +4441,7 @@ namespace Play
 	{
 		static bool initialized = false;
 		static PixelData circle;
-		const short radius = 3;
+		const short radius = 4;
 		const short diameter = radius * 2;
 
 		if (!initialized)

@@ -1,6 +1,7 @@
 #define PLAY_IMPLEMENTATION
-#define PLAY_USING_GAMEOBJECT_MANAGER
+//#define PLAY_USING_GAMEOBJECT_MANAGER
 #include "Play.h"
+#include "particle.h"
 #include "Simulation.h"
 
 const int DISPLAY_WIDTH = 1920;
@@ -12,11 +13,11 @@ double dt = 0.016667;
 double Max = 0.0;
 double Min = 100.0;
 
-std::vector<Point2f> positions;
+std::vector<uint32_t> circles;
 int size = 0;
 
 const int ammountPerXY = 100;
-const short gap = 7;
+const short gap = 9;
 
 // The entry point for a PlayBuffer program
 void MainGameEntry( PLAY_IGNORE_COMMAND_LINE )
@@ -27,7 +28,9 @@ void MainGameEntry( PLAY_IGNORE_COMMAND_LINE )
 		for (int j = -ammountPerXY / 2; j < ammountPerXY / 2; j++)
 		{
 			int y = (DISPLAY_HEIGHT / 2.0f) + (gap * j);
-			positions.push_back({ x , y });
+			uint32_t id = Render::CreateParticle({ x, y });
+			circles.push_back(id);
+			Fluid::Simulation::getInstance().AddCircle(id);
 			size++;
 		}
 	}
@@ -42,13 +45,14 @@ bool MainGameUpdate( float elapsedTime )
 	Play::ClearDrawingBuffer( Play::cBlack );
 
 	//Simulation
-	//Fluid::Simulation::getInstance().Update(dt);
 
 	auto timeStartOld = std::chrono::steady_clock::now();
 
-	for (int i = 0; i < positions.size(); i++)
+	Fluid::Simulation::getInstance().Update(dt);
+	for (int i = 0; i < circles.size(); i++)
 	{
-		Play::FastDrawFilledCircle(positions[i], Play::cRed);
+		Vector2f pos = { Render::GetParticle(i).x, Render::GetParticle(i).y };
+		Play::FastDrawFilledCircle(pos, Play::cRed);
 	}
 
 	auto timeEndOld = std::chrono::steady_clock::now();
