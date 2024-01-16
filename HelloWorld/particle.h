@@ -6,9 +6,10 @@ namespace Render
 {
 	struct particle
 	{
-		float x, y;
-		float vx = 0.0f, vy = 0.0f;
+		Vector2f pos;
+		Vector2f vel = {0.0f, 0.0f};
 		float d = 1.0f;
+		float p = 0.0f;
 	};
 
 	uint32_t CreateParticle(const Point2f& pos);

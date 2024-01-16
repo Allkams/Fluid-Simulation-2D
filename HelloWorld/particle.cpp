@@ -7,8 +7,7 @@ namespace Render
 	uint32_t CreateParticle(const Point2f& pos)
 	{
 		particle particle;
-		particle.x = pos.x;
-		particle.y = pos.y;
+		particle.pos = pos;
 
 		const uint32_t particleID = (uint32_t)particlesAlloc.size();
 		particlesAlloc.push_back(particle);

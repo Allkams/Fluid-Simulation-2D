@@ -4,8 +4,12 @@
 #include "particle.h"
 #include "Simulation.h"
 
-const int DISPLAY_WIDTH = 1920;
-const int DISPLAY_HEIGHT = 1080;
+//const int DISPLAY_WIDTH = 1920;	//School
+//const int DISPLAY_HEIGHT = 1080;	//School
+
+const int DISPLAY_WIDTH = 1400;		//Laptop
+const int DISPLAY_HEIGHT = 750;		//Laptop
+
 const int DISPLAY_SCALE = 1;
 
 double dt = 0.016667;
@@ -16,7 +20,7 @@ double Min = 100.0;
 std::vector<uint32_t> circles;
 int size = 0;
 
-const int ammountPerXY = 100;
+const int ammountPerXY = 20;
 const short gap = 9;
 
 // The entry point for a PlayBuffer program
@@ -51,8 +55,8 @@ bool MainGameUpdate( float elapsedTime )
 	Fluid::Simulation::getInstance().Update(dt);
 	for (int i = 0; i < circles.size(); i++)
 	{
-		Vector2f pos = { Render::GetParticle(i).x, Render::GetParticle(i).y };
-		Play::FastDrawFilledCircle(pos, Play::cRed);
+		Vector2f pos = { Render::GetParticle(i).pos.x, Render::GetParticle(i).pos.y };
+		Play::FastDrawFilledCircle(pos, Play::cCyan);
 	}
 
 	auto timeEndOld = std::chrono::steady_clock::now();
@@ -74,6 +78,7 @@ bool MainGameUpdate( float elapsedTime )
 	std::string textNew = "Elapsed function: " + std::to_string(elapseOld);
 	std::string textMin = "Min time: " + std::to_string(Min);
 	std::string textMax = "Max time: " + std::to_string(Max);
+	std::string textballs = "Particle Amount: " + std::to_string(ammountPerXY * ammountPerXY);
 
 	Play::DrawDebugText({ 10, 10 }, text.c_str(), fps < 25 ? Play::cRed : Play::cWhite, false);
 	Play::DrawDebugText({ 10, 25 }, textdt.c_str(), fps < 25 ? Play::cRed : Play::cWhite, false);
@@ -81,6 +86,7 @@ bool MainGameUpdate( float elapsedTime )
 	Play::DrawDebugText({ 10, DISPLAY_HEIGHT - 25 }, textNew.c_str(), fps < 25 ? Play::cRed : Play::cWhite, false);
 	Play::DrawDebugText({ 225, DISPLAY_HEIGHT - 25 }, textMin.c_str(), fps < 25 ? Play::cRed : Play::cWhite, false);
 	Play::DrawDebugText({ 400, DISPLAY_HEIGHT - 25 }, textMax.c_str(), fps < 25 ? Play::cRed : Play::cWhite, false);
+	Play::DrawDebugText({ DISPLAY_WIDTH - 300, 10 }, textballs.c_str(), Play::cWhite, false);
 
 	Play::DrawDebugText({ DISPLAY_WIDTH / 2, 10 }, "Fluid Simulation By Alexander Marklund (Allkams)!");
 	Play::DrawDebugText({ DISPLAY_WIDTH / 2, 25 }, "Created with Playbuffer");

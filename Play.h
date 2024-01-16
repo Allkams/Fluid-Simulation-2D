@@ -4441,11 +4441,11 @@ namespace Play
 	{
 		static bool initialized = false;
 		static PixelData circle;
-		const short radius = 4;
-		const short diameter = radius * 2;
 
 		if (!initialized)
 		{
+			const short radius = 4;
+			const short diameter = radius * 2;
 			const Pixel pixel = { c.red * 2.55f, c.green * 2.55f, c.blue * 2.55f };
 			circle.pPixels = new Pixel[diameter * diameter];
 
