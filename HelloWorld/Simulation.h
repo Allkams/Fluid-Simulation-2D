@@ -21,7 +21,7 @@ namespace Fluid
 		void incrementSimulationStep(int amount = 1);
 		void deincrementSimulationStep(int amount = 1);
 
-		void doubleDensityRelaxation(Render::particle& p, int pID, float dt);
+		void doubleDensityRelaxation(float dt);
 
 		void draw();
 
