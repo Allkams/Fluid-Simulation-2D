@@ -4,11 +4,11 @@
 #include "particle.h"
 #include "Simulation.h"
 
-//const int DISPLAY_WIDTH = 1920;	//School
-//const int DISPLAY_HEIGHT = 1080;	//School
+const int DISPLAY_WIDTH = 1920;	//School
+const int DISPLAY_HEIGHT = 1080;	//School
 
-const int DISPLAY_WIDTH = 1400;		//Laptop
-const int DISPLAY_HEIGHT = 750;		//Laptop
+//const int DISPLAY_WIDTH = 1400;		//Laptop
+//const int DISPLAY_HEIGHT = 750;		//Laptop
 
 const int DISPLAY_SCALE = 1;
 
@@ -20,23 +20,35 @@ double Min = 100.0;
 std::vector<uint32_t> circles;
 int size = 0;
 
-const int ammountPerXY = 20;
+const int ammountPerXY = 10;
 const short gap = 9;
 
 // The entry point for a PlayBuffer program
 void MainGameEntry( PLAY_IGNORE_COMMAND_LINE )
 {
-	for (int i = -ammountPerXY/2; i < ammountPerXY / 2; i++)
+	if (ammountPerXY > 1)
 	{
-		int x = (DISPLAY_WIDTH / 2.0f) + (gap * i);
-		for (int j = -ammountPerXY / 2; j < ammountPerXY / 2; j++)
+		for (int i = -ammountPerXY/2; i < ammountPerXY / 2; i++)
 		{
-			int y = (DISPLAY_HEIGHT / 2.0f) + (gap * j);
-			uint32_t id = Render::CreateParticle({ x, y });
-			circles.push_back(id);
-			Fluid::Simulation::getInstance().AddCircle(id);
-			size++;
+			int x = (DISPLAY_WIDTH / 2.0f) + (gap * i);
+			for (int j = -ammountPerXY / 2; j < ammountPerXY / 2; j++)
+			{
+				int y = (DISPLAY_HEIGHT / 2.0f) + (gap * j);
+				uint32_t id = Render::CreateParticle({ x, y });
+				circles.push_back(id);
+				Fluid::Simulation::getInstance().AddCircle(id);
+				size++;
+			}
 		}
+	}
+	else
+	{
+		int x = (DISPLAY_WIDTH / 2.0f);
+		int y = (DISPLAY_HEIGHT / 2.0f);
+		uint32_t id = Render::CreateParticle({ x, y });
+		circles.push_back(id);
+		Fluid::Simulation::getInstance().AddCircle(id);
+		size++;
 	}
 
 	Play::CreateManager( DISPLAY_WIDTH, DISPLAY_HEIGHT, DISPLAY_SCALE );
@@ -51,13 +63,21 @@ bool MainGameUpdate( float elapsedTime )
 	//Simulation
 
 	auto timeStartOld = std::chrono::steady_clock::now();
+	if (Play::KeyPressed(0x4E) || Play::KeyDown(0x4D))
+	{
+		Fluid::Simulation::getInstance().Update(dt);
+	}
 
-	Fluid::Simulation::getInstance().Update(dt);
+	Vector2f pos = { Render::GetParticle(0).pos.x, Render::GetParticle(0).pos.y };
+	Play::DrawFilledCircle(pos, 25.0f, Play::cRed, 0.5f);
+
 	for (int i = 0; i < circles.size(); i++)
 	{
 		Vector2f pos = { Render::GetParticle(i).pos.x, Render::GetParticle(i).pos.y };
 		Play::FastDrawFilledCircle(pos, Play::cCyan);
 	}
+	Play::DrawFilledCircle(pos, 2.5f, Play::cWhite, 1.0f);
+
 
 	auto timeEndOld = std::chrono::steady_clock::now();
 

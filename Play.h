@@ -3657,7 +3657,7 @@ void PlayGraphics::DrawPixelData( PixelData* pixelData, Point2f pos, float alpha
 		PreMultiplyAlpha( pixelData->pPixels, pixelData->pPixels, pixelData->width, pixelData->height, pixelData->width );
 		pixelData->preMultiplied = true;
 	}
-	m_blitter.FastBlitPixels( *pixelData, 0, static_cast<int>(pos.x), static_cast<int>(pos.y), pixelData->width, pixelData->height, alpha );
+	m_blitter.BlitPixels( *pixelData, 0, static_cast<int>(pos.x), static_cast<int>(pos.y), pixelData->width, pixelData->height, alpha );
 }
 
 
@@ -4420,9 +4420,9 @@ namespace Play
 		}
 	}
 
-	void DrawFilledCircle(const Point2f& centre, const short radius)
+	void DrawFilledCircle(const Point2f& centre, const short radius, const Colour& c, const float alpha = 1.0f)
 	{
-		//const Pixel pixel = { c.red * 2.55f, c.green * 2.55f, c.blue * 2.55f };
+		const Pixel pixel = {(int)(alpha * 255) ,(int)(c.red * 2.55f), (int)(c.green * 2.55f), (int)(c.blue * 2.55f) };
 
 		for (short x = -radius; x < radius; x++)
 		{
@@ -4431,7 +4431,7 @@ namespace Play
 				if (x * x + y * y < radius * radius)
 				{
 					const Point2f position = centre + Point2f(x, y);
-					PlayGraphics::Instance().DrawPixel(position, PIX_RED);
+					PlayGraphics::Instance().DrawPixel(position, pixel);
 				}
 			}
 		}
@@ -4442,17 +4442,18 @@ namespace Play
 		static bool initialized = false;
 		static PixelData circle;
 
+		// NOTE: Circle offsetted with one pixel left. 
 		if (!initialized)
 		{
 			const short radius = 4;
-			const short diameter = radius * 2;
+			const short diameter = radius * 2.0f;
 			const Pixel pixel = { c.red * 2.55f, c.green * 2.55f, c.blue * 2.55f };
 			circle.pPixels = new Pixel[diameter * diameter];
 
 			for (int i = 0; i < diameter * diameter; i++)
 			{
-				int x = i % diameter - radius;
-				int y = i / diameter - radius;
+				float x = i % diameter - radius;
+				float y = i / diameter - radius;
 
 				if (x * x + y * y < radius * radius)
 				{
@@ -4460,7 +4461,7 @@ namespace Play
 				}
 				else
 				{
-					circle.pPixels[i] = 0;
+					circle.pPixels[i] = PIX_TRANS;
 				}
 			}
 
@@ -4469,8 +4470,8 @@ namespace Play
 
 			initialized = true;
 		}
-
-		PlayGraphics::Instance().DrawPixelData(&circle, centre);
+		const Vector2f pos = { centre.x  - circle.width / 2.0f, centre.y - circle.height / 2.0f };
+		PlayGraphics::Instance().DrawPixelData(&circle, pos);
 
 	}
 

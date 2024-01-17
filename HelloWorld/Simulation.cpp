@@ -38,6 +38,7 @@ namespace Fluid
 		}
 
 		doubleDensityRelaxation(deltatime);
+
 		//Collision towards boundaries
 		for (int i = 0; i < circleIDs.size(); i++)
 		{
@@ -66,7 +67,7 @@ namespace Fluid
 				particle.vel.y = -particle.vel.y * dampFactor;
 			}
 
-			particle.vel = (particle.pos - prevPositons[i]) / deltatime;
+			//particle.vel = (particle.pos - prevPositons[i]) / deltatime;
 		}
 
 		draw();
@@ -79,57 +80,72 @@ namespace Fluid
 
 	void Simulation::doubleDensityRelaxation(float dt)
 	{
-		//Something incorrect here but on the correct path at least.
+		const float interactionRadius = 12.0f;
+		const float stiffness = 3.0f; // Adjust as needed
+		const float nearStiffness = 2.0f; // Adjust as needed
+
 		for (int i = 0; i < circleIDs.size(); i++)
 		{
 			Render::particle& p = Render::GetParticle(i);
 
+			const Vector2f OriginPos = p.pos;
+
 			float d = 0.0f;
 			float dNear = 0.0f;
-			for (int j= 0; j< circleIDs.size(); j++)
+
+			for (int j = 0; j < circleIDs.size(); j++)
 			{
 				if (j == i)
 					continue;
 
 				Render::particle& neighbour = Render::GetParticle(j);
 
-				if ((neighbour.pos - p.pos).Length() > 25.0f)
-					continue;
+				const float distance = (neighbour.pos - OriginPos).Length();
 
-				Vector2f q = (neighbour.pos - p.pos) / 25.0f;
-				float size = q.Length();
+				//if (distance > interactionRadius)
+				//	continue;
+
+				const Vector2f q = (neighbour.pos - OriginPos) / interactionRadius;
+				const float size = q.Length();
+
 				if (size < 1.0f)
 				{
 					d += pow(1 - size, 2);
 					dNear += pow(1 - size, 3);
 				}
 			}
-			float P = 1 * (d - 1.0f);
-			float pNear = 1 * dNear;
-			Vector2f dx = {0,0};
-			for (int j= 0; j< circleIDs.size(); j++)
+
+			const float P = stiffness * (d - 2.0f);
+			const float pNear = nearStiffness * dNear;
+
+			Vector2f dx = { 0, 0 };
+
+			for (int j = 0; j < circleIDs.size(); j++)
 			{
-				if (j== i)
+				if (j == i)
 					continue;
 
 				Render::particle& neighbour = Render::GetParticle(j);
 
-				if ((neighbour.pos - p.pos).Length() > 25.0f)
-					continue;
+				const float distance = (neighbour.pos - OriginPos).Length();
 
-				Vector2f q = (neighbour.pos - p.pos) / 25.0f;
+				//if (distance > interactionRadius)
+				//	continue;
+
+				const Vector2f q = (neighbour.pos - OriginPos) / interactionRadius;
 				Vector2f qN = q;
 				qN.Normalize();
-				float size = q.Length();
+				const float size = q.Length();
+
 				if (size < 1.0f)
 				{
-					Vector2f D = (dt * dt) * (P * (1 - size) + pNear * pow(1 - size, 2)) * qN;
+					const Vector2f D = (dt * dt) * (P * (1 - size) + pNear * pow(1 - size, 2)) * qN;
 					neighbour.pos += D / 2.0f;
 					dx -= D / 2.0f;
 				}
 			}
-			p.pos += dx;
 
+			p.pos += dx;
 		}
 	}
 
