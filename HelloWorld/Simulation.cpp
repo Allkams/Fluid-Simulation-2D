@@ -2,6 +2,7 @@
 //#define PLAY_USING_GAMEOBJECT_MANAGER
 #include "Simulation.h"
 #include "math.h"
+#include "boundary.h"
 
 namespace Fluid
 {
@@ -29,11 +30,10 @@ namespace Fluid
 		for (int i = 0; i < circleIDs.size(); i++)
 		{
 			Render::particle& particle = Render::GetParticle(i);
-			//particle.vel.y += 9.82f * deltatime;
+			//particle.vel.y += 3.82f * deltatime;
 
-			//math::rectangleCollision({ particle.x, particle.y }, velocities[i], { 300, 300 }, { 1000 , 1000 });
 			prevPositons.push_back(particle.pos);
-			particle.pos += particle.vel;
+			particle.pos += deltatime * particle.vel;
 
 		}
 
@@ -45,32 +45,34 @@ namespace Fluid
 			Render::particle& particle = Render::GetParticle(i);
 
 			// Collision resolver, simple edition
-			if (particle.pos.x - 6 < 200)
+			Point2D& topLeft = Render::Boundary::instance().getTopLeft();
+			Point2D& bottomRight = Render::Boundary::instance().getBottomRight();
+			if (particle.pos.x - 6 < topLeft.x)
 			{
-				particle.pos.x = 10 + 6;
+				particle.pos.x = topLeft.x + 6;
 				particle.vel.x = -particle.vel.x * dampFactor;
 			}
-			else if (particle.pos.x + 6 >= 1200)
+			else if (particle.pos.x + 6 >= bottomRight.x)
 			{
-				particle.pos.x = 1200 - 6;
+				particle.pos.x = bottomRight.x - 6;
 				particle.vel.x = -particle.vel.x * dampFactor;
 			}
 
-			if (particle.pos.y - 6 < 10)
+			if (particle.pos.y - 6 < topLeft.y)
 			{
-				particle.pos.y = 10 + 6;
+				particle.pos.y = topLeft.y + 6;
 				particle.vel.y = -particle.vel.y * dampFactor;
 			}
-			else if (particle.pos.y + 6 >= 700)
+			else if (particle.pos.y + 6 >= bottomRight.y)
 			{
-				particle.pos.y = 700 - 6;
+				particle.pos.y = bottomRight.y - 6;
 				particle.vel.y = -particle.vel.y * dampFactor;
 			}
 
-			//particle.vel = (particle.pos - prevPositons[i]) / deltatime;
+			particle.vel = (particle.pos - prevPositons[i]) / deltatime;
 		}
 
-		draw();
+		//draw();
 	}
 
 	void Simulation::AddCircle(uint32_t cID)
@@ -80,7 +82,7 @@ namespace Fluid
 
 	void Simulation::doubleDensityRelaxation(float dt)
 	{
-		const float interactionRadius = 12.0f;
+		const float interactionRadius = 50.0f;
 		const float stiffness = 3.0f; // Adjust as needed
 		const float nearStiffness = 2.0f; // Adjust as needed
 
@@ -115,7 +117,7 @@ namespace Fluid
 				}
 			}
 
-			const float P = stiffness * (d - 2.0f);
+			const float P = stiffness * (d - 1.0f);
 			const float pNear = nearStiffness * dNear;
 
 			Vector2f dx = { 0, 0 };

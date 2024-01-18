@@ -10,6 +10,9 @@
     <Filter Include="Source Files\Fluid">
       <UniqueIdentifier>{e08620ae-aa02-4ca3-949f-176b58279175}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\Render">
+      <UniqueIdentifier>{4f594e2b-c41d-4570-955c-235ac603421f}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="MainGame.cpp">
@@ -20,6 +23,9 @@
     </ClCompile>
     <ClCompile Include="particle.cpp">
       <Filter>Source Files\Fluid</Filter>
+    </ClCompile>
+    <ClCompile Include="boundary.cpp">
+      <Filter>Source Files\Render</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

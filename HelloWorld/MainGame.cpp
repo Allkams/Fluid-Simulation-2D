@@ -2,6 +2,7 @@
 //#define PLAY_USING_GAMEOBJECT_MANAGER
 #include "Play.h"
 #include "particle.h"
+#include "boundary.h"
 #include "Simulation.h"
 
 const int DISPLAY_WIDTH = 1920;	//School
@@ -21,7 +22,9 @@ std::vector<uint32_t> circles;
 int size = 0;
 
 const int ammountPerXY = 10;
-const short gap = 9;
+const short gap = 30;
+
+bool bPaused = false;
 
 // The entry point for a PlayBuffer program
 void MainGameEntry( PLAY_IGNORE_COMMAND_LINE )
@@ -51,6 +54,9 @@ void MainGameEntry( PLAY_IGNORE_COMMAND_LINE )
 		size++;
 	}
 
+	Render::Boundary::instance().resize(500, 500);
+	Render::Boundary::instance().move({ DISPLAY_WIDTH /2, DISPLAY_HEIGHT /2 });
+
 	Play::CreateManager( DISPLAY_WIDTH, DISPLAY_HEIGHT, DISPLAY_SCALE );
 }
 
@@ -63,26 +69,31 @@ bool MainGameUpdate( float elapsedTime )
 	//Simulation
 
 	auto timeStartOld = std::chrono::steady_clock::now();
-	if (Play::KeyPressed(0x4E) || Play::KeyDown(0x4D))
+
+	if (bPaused && (Play::KeyPressed(0x4E) || Play::KeyDown(0x4D)))
+	{
+		Fluid::Simulation::getInstance().Update(dt);
+	}
+	else
 	{
 		Fluid::Simulation::getInstance().Update(dt);
 	}
 
-	Vector2f pos = { Render::GetParticle(0).pos.x, Render::GetParticle(0).pos.y };
-	Play::DrawFilledCircle(pos, 25.0f, Play::cRed, 0.5f);
+	//Vector2f pos = { Render::GetParticle(0).pos.x, Render::GetParticle(0).pos.y };
+	//Play::DrawFilledCircle(pos, 25.0f, Play::cRed, 0.5f);
 
 	for (int i = 0; i < circles.size(); i++)
 	{
 		Vector2f pos = { Render::GetParticle(i).pos.x, Render::GetParticle(i).pos.y };
 		Play::FastDrawFilledCircle(pos, Play::cCyan);
 	}
-	Play::DrawFilledCircle(pos, 2.5f, Play::cWhite, 1.0f);
-
+	//Play::DrawFilledCircle(pos, 2.5f, Play::cWhite, 1.0f);
 
 	auto timeEndOld = std::chrono::steady_clock::now();
 
 	double elapseOld = std::chrono::duration<double>(timeEndOld - timeStartOld).count();
 
+	Render::Boundary::instance().draw();
 	if (elapseOld < Min)
 	{
 		Min = elapseOld;
