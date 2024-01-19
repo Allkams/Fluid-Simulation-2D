@@ -82,9 +82,8 @@ namespace Fluid
 
 	void Simulation::doubleDensityRelaxation(float dt)
 	{
-		const float interactionRadius = 50.0f;
-		const float stiffness = 3.0f; // Adjust as needed
-		const float nearStiffness = 2.0f; // Adjust as needed
+		const float interactionRadius = 25.0f;
+		const float pressureMultiplier = 3.0f; // Adjust as needed
 
 		for (int i = 0; i < circleIDs.size(); i++)
 		{
@@ -107,18 +106,17 @@ namespace Fluid
 				//if (distance > interactionRadius)
 				//	continue;
 
-				const Vector2f q = (neighbour.pos - OriginPos) / interactionRadius;
-				const float size = q.Length();
+				const float influense = (neighbour.pos - OriginPos).Length() / interactionRadius;
 
-				if (size < 1.0f)
+				if (influense < 1.0f)
 				{
-					d += pow(1 - size, 2);
-					dNear += pow(1 - size, 3);
+					d += pow(1 - influense, 2);
+					dNear += pow(1 - influense, 3);
 				}
 			}
 
-			const float P = stiffness * (d - 1.0f);
-			const float pNear = nearStiffness * dNear;
+			const float P = pressureMultiplier * (d - 1.0f);
+			const float pNear = pressureMultiplier * dNear;
 
 			Vector2f dx = { 0, 0 };
 
