@@ -21,33 +21,58 @@ double Min = 100.0;
 std::vector<uint32_t> circles;
 int size = 0;
 
-const int ammountPerXY = 10;
+const int ParticleAmmount = 100;
+const int RowSize = 20;
 const short gap = 30;
 
-bool bPaused = false;
+bool bPaused = true;
 
 // The entry point for a PlayBuffer program
 void MainGameEntry( PLAY_IGNORE_COMMAND_LINE )
 {
-	if (ammountPerXY > 1)
+	//if (ammountPerXY > 1)
+	//{
+	//	for (int i = -ammountPerXY/2; i < ammountPerXY / 2; i++)
+	//	{
+	//		int x = (DISPLAY_WIDTH / 2.0f) + (gap * i);
+	//		for (int j = -ammountPerXY / 2; j < ammountPerXY / 2; j++)
+	//		{
+	//			int y = (DISPLAY_HEIGHT / 2.0f) + (gap * j);
+	//			uint32_t id = Render::CreateParticle({ x, y });
+	//			circles.push_back(id);
+	//			Fluid::Simulation::getInstance().AddCircle(id);
+	//			size++;
+	//		}
+	//	}
+	//}
+	//else
+	//{
+	//	int x = (DISPLAY_WIDTH / 2.0f);
+	//	int y = (DISPLAY_HEIGHT / 2.0f);
+	//	uint32_t id = Render::CreateParticle({ x, y });
+	//	circles.push_back(id);
+	//	Fluid::Simulation::getInstance().AddCircle(id);
+	//	size++;
+	//}
+	int totalWidth = ParticleAmmount % RowSize;
+	int TotalOffsetFromCenterWidth = totalWidth == 0 ? RowSize * gap : totalWidth * gap;
+
+	int totalHeight = ParticleAmmount / RowSize;
+	int TotalOffsetFromCenterHeight = totalHeight * gap;
+
+	for (int i = 0; i < ParticleAmmount; i++)
 	{
-		for (int i = -ammountPerXY/2; i < ammountPerXY / 2; i++)
-		{
-			int x = (DISPLAY_WIDTH / 2.0f) + (gap * i);
-			for (int j = -ammountPerXY / 2; j < ammountPerXY / 2; j++)
-			{
-				int y = (DISPLAY_HEIGHT / 2.0f) + (gap * j);
-				uint32_t id = Render::CreateParticle({ x, y });
-				circles.push_back(id);
-				Fluid::Simulation::getInstance().AddCircle(id);
-				size++;
-			}
-		}
-	}
-	else
-	{
-		int x = (DISPLAY_WIDTH / 2.0f);
-		int y = (DISPLAY_HEIGHT / 2.0f);
+		int localX = i % RowSize;
+		int localY = i / RowSize;
+
+		int XOffset = localX * gap;
+		int YOffset = localY * gap;
+
+		int worldOffsetX = (DISPLAY_WIDTH / 2) - (TotalOffsetFromCenterWidth / 2);
+		int worldOffsetY = (DISPLAY_HEIGHT / 2) - (TotalOffsetFromCenterHeight / 2);
+		int x = worldOffsetX + XOffset;
+		int y = worldOffsetY + YOffset;
+
 		uint32_t id = Render::CreateParticle({ x, y });
 		circles.push_back(id);
 		Fluid::Simulation::getInstance().AddCircle(id);
@@ -74,7 +99,7 @@ bool MainGameUpdate( float elapsedTime )
 	{
 		Fluid::Simulation::getInstance().Update(dt);
 	}
-	else
+	else if (!bPaused)
 	{
 		Fluid::Simulation::getInstance().Update(dt);
 	}
@@ -87,7 +112,7 @@ bool MainGameUpdate( float elapsedTime )
 		Vector2f pos = { Render::GetParticle(i).pos.x, Render::GetParticle(i).pos.y };
 		Play::FastDrawFilledCircle(pos, Play::cCyan);
 	}
-	//Play::DrawFilledCircle(pos, 2.5f, Play::cWhite, 1.0f);
+	Play::DrawFilledCircle({ DISPLAY_WIDTH / 2.0f, DISPLAY_HEIGHT / 2.0f }, 10.0f, Play::cWhite, 1.0f);
 
 	auto timeEndOld = std::chrono::steady_clock::now();
 
@@ -109,7 +134,7 @@ bool MainGameUpdate( float elapsedTime )
 	std::string textNew = "Elapsed function: " + std::to_string(elapseOld);
 	std::string textMin = "Min time: " + std::to_string(Min);
 	std::string textMax = "Max time: " + std::to_string(Max);
-	std::string textballs = "Particle Amount: " + std::to_string(ammountPerXY * ammountPerXY);
+	std::string textballs = "Particle Amount: " + std::to_string(ParticleAmmount);
 
 	Play::DrawDebugText({ 10, 10 }, text.c_str(), fps < 25 ? Play::cRed : Play::cWhite, false);
 	Play::DrawDebugText({ 10, 25 }, textdt.c_str(), fps < 25 ? Play::cRed : Play::cWhite, false);
