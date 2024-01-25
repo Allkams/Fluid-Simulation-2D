@@ -14,4 +14,6 @@ namespace Render
 
 	uint32_t CreateParticle(const Point2f& pos);
 	particle& GetParticle(int id);
+	void RemoveParticle(int32_t id);
+	void ClearParticles();
 }

@@ -30,7 +30,7 @@ namespace Fluid
 		for (int i = 0; i < circleIDs.size(); i++)
 		{
 			Render::particle& particle = Render::GetParticle(i);
-			//particle.vel.y += 3.82f * deltatime;
+			//particle.vel.y += 9.82f * deltatime;
 
 			prevPositons.push_back(particle.pos);
 			particle.pos += deltatime * particle.vel;
@@ -43,6 +43,8 @@ namespace Fluid
 		for (int i = 0; i < circleIDs.size(); i++)
 		{
 			Render::particle& particle = Render::GetParticle(i);
+
+			particle.vel = (particle.pos - prevPositons[i]) / deltatime;
 
 			// Collision resolver, simple edition
 			Point2D& topLeft = Render::Boundary::instance().getTopLeft();
@@ -69,7 +71,7 @@ namespace Fluid
 				particle.vel.y = -particle.vel.y * dampFactor;
 			}
 
-			particle.vel = (particle.pos - prevPositons[i]) / deltatime;
+
 		}
 
 		//draw();
@@ -80,9 +82,14 @@ namespace Fluid
 		circleIDs.push_back(cID);
 	}
 
+	void Simulation::ClearCircles()
+	{
+		circleIDs.clear();
+	}
+
 	void Simulation::doubleDensityRelaxation(float dt)
 	{
-		const float interactionRadius = 25.0f;
+		const float interactionRadius = 100.0f;
 		const float pressureMultiplier = 3.0f; // Adjust as needed
 
 		for (int i = 0; i < circleIDs.size(); i++)
@@ -100,11 +107,9 @@ namespace Fluid
 					continue;
 
 				Render::particle& neighbour = Render::GetParticle(j);
-
-				const float distance = (neighbour.pos - OriginPos).Length();
-
-				//if (distance > interactionRadius)
-				//	continue;
+				float dist = (neighbour.pos - OriginPos).Length();
+				if (dist > interactionRadius)
+					continue;
 
 				const float influense = (neighbour.pos - OriginPos).Length() / interactionRadius;
 
@@ -129,8 +134,8 @@ namespace Fluid
 
 				const float distance = (neighbour.pos - OriginPos).Length();
 
-				//if (distance > interactionRadius)
-				//	continue;
+				if (distance > interactionRadius)
+					continue;
 
 				const Vector2f q = (neighbour.pos - OriginPos) / interactionRadius;
 				Vector2f qN = q;

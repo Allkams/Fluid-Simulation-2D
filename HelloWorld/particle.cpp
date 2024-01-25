@@ -19,4 +19,21 @@ namespace Render
 	{
 		return particlesAlloc[id];
 	}
+
+	void RemoveParticle(int32_t id)
+	{
+		if (id < particlesAlloc.size())
+		{
+			particlesAlloc.erase(particlesAlloc.begin() + id);
+		}
+		else
+		{
+			// Handle invalid particleID (out of range)
+			printf("Error: Invalid particle ID, %i", id);
+		}
+	}
+	void ClearParticles()
+	{
+		particlesAlloc.clear();
+	}
 }

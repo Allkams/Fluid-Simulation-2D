@@ -13,6 +13,7 @@ namespace Fluid
 		void HandleInput();
 
 		void AddCircle(uint32_t cID);
+		void ClearCircles();
 		void SetBoundries(const Vector2f& topLeft, const Vector2f& bottomright);
 		void initCircleAmount(int Ammount);
 
