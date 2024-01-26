@@ -22,7 +22,7 @@ double Min = 100.0;
 std::vector<uint32_t> circles;
 int size = 0;
 
-int ParticleAmmount = 1000;
+int ParticleAmmount = 100;
 const int RowSize = 20;
 const short gap = 12;
 
@@ -42,7 +42,7 @@ void GenerateGrid()
 	int totalWidth = ParticleAmmount > RowSize ? 0 : ParticleAmmount% RowSize;
 	int TotalOffsetFromCenterWidth = totalWidth == 0 ? RowSize * gap : totalWidth * gap;
 
-	int totalHeight = ceill((float)ParticleAmmount / (float)RowSize);
+	int totalHeight = ceil((float)ParticleAmmount / (float)RowSize);
 	int TotalOffsetFromCenterHeight = totalHeight * gap;
 
 	for (int i = 0; i < ParticleAmmount; i++)
@@ -84,13 +84,13 @@ bool MainGameUpdate( float elapsedTime )
 
 	//Simulation
 
-	auto timeStartOld = std::chrono::steady_clock::now();
 
 	if (Play::KeyPressed(VK_SPACE))
 	{
 		bPaused = !bPaused;
 	}
 
+	auto timeStartOld = std::chrono::steady_clock::now();
 	if (bPaused && (Play::KeyPressed(0x4E) || Play::KeyDown(0x4D)))
 	{
 		Fluid::Simulation::getInstance().Update(dt);
@@ -99,6 +99,7 @@ bool MainGameUpdate( float elapsedTime )
 	{
 		Fluid::Simulation::getInstance().Update(dt);
 	}
+	auto timeEndOld = std::chrono::steady_clock::now();
 
 	if (Play::KeyPressed(VK_RIGHT))
 	{
@@ -128,7 +129,6 @@ bool MainGameUpdate( float elapsedTime )
 	}
 	//Play::DrawFilledCircle({ DISPLAY_WIDTH / 2.0f, DISPLAY_HEIGHT / 2.0f }, 10.0f, Play::cWhite, 1.0f);
 
-	auto timeEndOld = std::chrono::steady_clock::now();
 
 	double elapseOld = std::chrono::duration<double>(timeEndOld - timeStartOld).count();
 

@@ -1,37 +1,37 @@
 #pragma once
 #include <vector>
+#include <unordered_set>
+#include <unordered_map>
 #include "Play.h"
 #include "particle.h"
+#include "springPair.h"
 
 namespace Fluid
 {
+
 	class Simulation
 	{
 	public:
 		static Simulation& getInstance();
 		void Update(float deltaTime);
-		void HandleInput();
 
 		void AddCircle(uint32_t cID);
 		void ClearCircles();
-		void SetBoundries(const Vector2f& topLeft, const Vector2f& bottomright);
-		void initCircleAmount(int Ammount);
 
 	private:
-		void pauseSimulation(bool bPause);
-		void incrementSimulationStep(int amount = 1);
-		void deincrementSimulationStep(int amount = 1);
 
+		void applyViscosity(float dt);
+		void springAdjustment(float dt);
 		void doubleDensityRelaxation(float dt);
+		void springDisplacement(float dt);
 
-		void draw();
+		void updateNeighbours();
 
-		float global_DT;
+		const float interactionRadius = 50.0f;
 
 		std::vector<uint32_t> circleIDs;
-		//std::vector<Vector2f> positions;
-		//std::vector<Vector2f> velocities;
-		//std::vector<float> densities;
+		std::unordered_set<SpringPair> springPairs;
+		std::unordered_map<uint32_t, std::vector<uint32_t>> neighbourList;
 	private:
 		Simulation() {};
 		Simulation(const Simulation& other) = delete;
