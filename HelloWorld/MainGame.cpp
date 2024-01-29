@@ -35,7 +35,7 @@ void GenerateGrid()
 	{
 		circles.clear();
 		Render::ClearParticles();
-		Fluid::Simulation::getInstance().ClearCircles();
+		Fluid::Simulation::getInstance().ClearData();
 		size = 0;
 	}
 

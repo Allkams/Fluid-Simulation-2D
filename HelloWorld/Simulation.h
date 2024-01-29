@@ -16,7 +16,7 @@ namespace Fluid
 		void Update(float deltaTime);
 
 		void AddCircle(uint32_t cID);
-		void ClearCircles();
+		void ClearData();
 
 	private:
 

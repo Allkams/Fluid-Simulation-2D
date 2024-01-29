@@ -32,10 +32,10 @@ namespace Fluid
 		for (int i = 0; i < circleIDs.size(); i++)
 		{
 			Render::particle& particle = Render::GetParticle(i);
-			particle.vel.y += 9.82f * 0.01667f;
+			particle.vel.y += 982.0f * 0.01667f;
 		}
 
-		applyViscosity(0.01667f);
+		//applyViscosity(0.01667f);
 
 		for (int i = 0; i < circleIDs.size(); i++)
 		{
@@ -80,11 +80,7 @@ namespace Fluid
 				particle.pos.y = bottomRight.y - 6;
 				particle.vel.y = -particle.vel.y * dampFactor;
 			}
-
-
 		}
-
-		//draw();
 	}
 
 	void Simulation::AddCircle(uint32_t cID)
@@ -92,9 +88,11 @@ namespace Fluid
 		circleIDs.push_back(cID);
 	}
 
-	void Simulation::ClearCircles()
+	void Simulation::ClearData()
 	{
 		circleIDs.clear();
+		springPairs.clear();
+		neighbourList.clear();
 	}
 
 	double distance(const Render::particle& p1, const Render::particle& p2) {
@@ -104,7 +102,7 @@ namespace Fluid
 	void Simulation::applyViscosity(float dt)
 	{
 		const float alfa = 1.0f;
-		const float beta = 0.10f;
+		const float beta = 0.0f;
 
 		for (int i = 0; i < circleIDs.size(); i++)
 		{
@@ -112,7 +110,7 @@ namespace Fluid
 			Render::particle& particle = Render::GetParticle(i);
 			for (int j = 0; j < it->second.size(); j++)
 			{
-				if (i == j || i > j)
+				if (i == j)
 				{
 					continue;
 				}
@@ -162,8 +160,8 @@ namespace Fluid
 	void Simulation::springAdjustment(float dt)
 	{
 		const float yieldRatio = 0.2f;
-		const float yieldStretch = 0.2f;
-		const float yieldCompress = 0.2f;
+		const float Stretch = 0.3f;
+		const float Compress = 0.3f;
 
 		for (int i = 0; i < circleIDs.size(); i++)
 		{
@@ -186,7 +184,7 @@ namespace Fluid
 				{
 					if (!pairExists(springPairs, i, j, interactionRadius)) {
 						springPairs.insert({ (uint32_t)i, (uint32_t)j, interactionRadius });
-						continue;
+						//continue;
 					}
 
 					auto it = springPairs.find({ (uint32_t)i, (uint32_t)j, interactionRadius });
@@ -198,11 +196,11 @@ namespace Fluid
 						float Deform = yieldRatio * spring;
 						if (dist > interactionRadius + Deform)	// Stretch
 						{
-							spring = spring + 0.01667f * yieldStretch * (dist - interactionRadius - Deform);
+							spring = spring + dt * Stretch * (dist - interactionRadius - Deform);
 						}
 						else if (dist < interactionRadius - Deform)	// Compress
 						{
-							spring = spring - 0.01667f * yieldCompress * (interactionRadius - Deform - dist);
+							spring = spring - dt * Compress * (interactionRadius - Deform - dist);
 						}
 					}
 
@@ -225,7 +223,8 @@ namespace Fluid
 
 	void Simulation::doubleDensityRelaxation(float dt)
 	{
-		const float pressureMultiplier = 10.0f; // Adjust as needed
+		const float pressureMultiplier = 0.004f; // Adjust as needed
+		const float pressureNearMultiplier = 0.01f; // Adjust as needed
 
 		for (int i = 0; i < circleIDs.size(); i++)
 		{
@@ -255,13 +254,13 @@ namespace Fluid
 
 				if (influense < 1.0f)
 				{
-					d += pow(1 - influense, 2);
-					dNear += pow(1 - influense, 3);
+					d += powf(1 - influense, 2);
+					dNear += powf(1 - influense, 3);
 				}
 			}
 
-			const float P = pressureMultiplier * (d - 0.5f);
-			const float pNear = pressureMultiplier * dNear;
+			const float P = pressureMultiplier * (d - 10.0f);
+			const float pNear = pressureNearMultiplier * dNear;
 
 			Vector2f dx = { 0, 0 };
 
@@ -284,7 +283,7 @@ namespace Fluid
 
 				if (size < 1.0f)
 				{
-					const Vector2f D = (0.01667f * 0.01667f) * (P * (1 - size) + pNear * pow(1 - size, 2)) * qN;
+					const Vector2f D = (dt * dt) * (P * (1 - size) + pNear * powf(1 - size, 2)) * qN;
 					neighbour.pos += D / 2.0f;
 					dx -= D / 2.0f;
 				}
@@ -296,7 +295,7 @@ namespace Fluid
 
 	void Simulation::springDisplacement(float dt)
 	{
-		const float springConstant = 1.0f;
+		const float springConstant = 0.3f;
 
 		for (const auto& springPair : springPairs)
 		{
@@ -308,7 +307,7 @@ namespace Fluid
 			const Vector2f q = (neighbour.pos - particle.pos) / interactionRadius;
 			Vector2f qN = q;
 			qN.Normalize();
-			const Vector2f D = powf(0.01667f, 2) * springConstant * ((1 - springPair.restSpring) / interactionRadius) * (springPair.restSpring - dist) * qN;
+			const Vector2f D = powf(dt, 2) * springConstant * ((1 - springPair.restSpring) / interactionRadius) * (springPair.restSpring - dist) * qN;
 			particle.pos -= D / 2.0f;
 			neighbour.pos += D / 2.0f;
 		}
