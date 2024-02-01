@@ -23,8 +23,8 @@ std::vector<uint32_t> circles;
 int size = 0;
 
 int ParticleAmmount = 100;
-const int RowSize = 20;
-const short gap = 12;
+int RowSize = 20;
+const short gap = 10;
 
 bool bPaused = true;
 
@@ -111,6 +111,16 @@ bool MainGameUpdate( float elapsedTime )
 		ParticleAmmount--;
 		GenerateGrid();
 	}
+	if (Play::KeyPressed(VK_UP))
+	{
+		RowSize++;
+		GenerateGrid();
+	}
+	if (Play::KeyPressed(VK_DOWN))
+	{
+		RowSize--;
+		GenerateGrid();
+	}
 
 	if (Play::KeyPressed(0x52))
 	{
@@ -119,8 +129,8 @@ bool MainGameUpdate( float elapsedTime )
 	}
 
 
-	//Vector2f pos = { Render::GetParticle(0).pos.x, Render::GetParticle(0).pos.y };
-	//Play::DrawFilledCircle(pos, 100.0f, Play::cRed, 0.5f);
+	//Vector2f pos = { Render::GetParticle(22).pos.x, Render::GetParticle(22).pos.y };
+	//Play::DrawFilledCircle(pos, 16.0f, Play::cRed, 0.5f);
 	for (int i = 0; i < circles.size(); i++)
 	{
 		Render::particle& p = Render::GetParticle(i);
