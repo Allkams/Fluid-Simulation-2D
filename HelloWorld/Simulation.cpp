@@ -25,14 +25,14 @@ namespace Fluid
 
 	void Simulation::Update(float deltatime)
 	{
-		updateNeighbours();
+		//updateNeighbours();
 
 		const float dampFactor = 0.95f;
 		std::vector<Vector2f> prevPositons;
 		for (int i = 0; i < circleIDs.size(); i++)
 		{
 			Render::particle& particle = Render::GetParticle(i);
-			particle.vel.y += 9.82f * 0.01667f;
+			particle.vel.y += 40.0f * 0.01667f;
 		}
 
 		applyViscosity(0.01667f);
@@ -102,8 +102,8 @@ namespace Fluid
 
 	void Simulation::applyViscosity(float dt)
 	{
-		const float alfa = 1.0f;
-		const float beta = 0.1f;
+		const float alfa = 10.0f;
+		const float beta = 0.0f;
 
 		for (int i = 0; i < circleIDs.size(); i++)
 		{
@@ -231,13 +231,6 @@ namespace Fluid
 		{
 			Render::particle& particle = Render::GetParticle(i);
 
-			auto it = neighbourList.find(i);
-
-			if (it == neighbourList.end())
-			{
-				continue;
-			}
-
 			float d = 0.0f;
 			float dNear = 0.0f;
 
@@ -260,7 +253,7 @@ namespace Fluid
 				}
 			}
 
-			const float P = pressureMultiplier * (d - 10.0f);
+			const float P = pressureMultiplier * (d - 50.0f);
 			const float pNear = pressureNearMultiplier * dNear;
 
 			Vector2f dx = { 0, 0 };
@@ -276,6 +269,7 @@ namespace Fluid
 
 				if (dist > interactionRadius)
 					continue;
+
 				const Vector2f q = (neighbour.pos - particle.pos) / interactionRadius;
 				Vector2f qN = q;
 				qN.Normalize();
