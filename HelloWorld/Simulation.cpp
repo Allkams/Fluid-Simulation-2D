@@ -29,13 +29,13 @@ namespace Fluid
 
 		const float dampFactor = 0.95f;
 		std::vector<Vector2f> prevPositons;
-		//for (int i = 0; i < circleIDs.size(); i++)
-		//{
-		//	Render::particle& particle = Render::GetParticle(i);
-		//	particle.vel.y += 982.0f * 0.01667f;
-		//}
+		for (int i = 0; i < circleIDs.size(); i++)
+		{
+			Render::particle& particle = Render::GetParticle(i);
+			particle.vel.y += 9.82f * 0.01667f;
+		}
 
-		//applyViscosity(0.01667f);
+		applyViscosity(0.01667f);
 
 		for (int i = 0; i < circleIDs.size(); i++)
 		{
@@ -45,8 +45,8 @@ namespace Fluid
 
 		}
 
-		//springAdjustment(0.01667f);
-		//springDisplacement(0.01667f);
+		springAdjustment(0.01667f);
+		springDisplacement(0.01667f);
 		doubleDensityRelaxation(0.01667f);
 
 		//Collision towards boundaries
@@ -60,25 +60,25 @@ namespace Fluid
 			// Collision resolver, simple edition
 			Point2D& topLeft = Render::Boundary::instance().getTopLeft();
 			Point2D& bottomRight = Render::Boundary::instance().getBottomRight();
-			if (particle.pos.x - 6 < topLeft.x)
+			if (particle.pos.x - 4 < topLeft.x)
 			{
-				particle.pos.x = topLeft.x + 6;
+				particle.pos.x = topLeft.x + 4;
 				particle.vel.x = -particle.vel.x * dampFactor;
 			}
-			else if (particle.pos.x + 6 >= bottomRight.x)
+			else if (particle.pos.x + 4 >= bottomRight.x)
 			{
-				particle.pos.x = bottomRight.x - 6;
+				particle.pos.x = bottomRight.x - 4;
 				particle.vel.x = -particle.vel.x * dampFactor;
 			}
 
-			if (particle.pos.y - 6 < topLeft.y)
+			if (particle.pos.y - 4 < topLeft.y)
 			{
-				particle.pos.y = topLeft.y + 6;
+				particle.pos.y = topLeft.y + 4;
 				particle.vel.y = -particle.vel.y * dampFactor;
 			}
-			else if (particle.pos.y + 6 >= bottomRight.y)
+			else if (particle.pos.y + 4 >= bottomRight.y)
 			{
-				particle.pos.y = bottomRight.y - 6;
+				particle.pos.y = bottomRight.y - 4;
 				particle.vel.y = -particle.vel.y * dampFactor;
 			}
 		}
@@ -160,9 +160,9 @@ namespace Fluid
 
 	void Simulation::springAdjustment(float dt)
 	{
-		const float yieldRatio = 0.2f;
-		const float Stretch = 0.3f;
-		const float Compress = 0.3f;
+		const float yieldRatio = 2.0f;
+		const float Stretch = 3.0f;
+		const float Compress = 3.0f;
 
 		for (int i = 0; i < circleIDs.size(); i++)
 		{
@@ -175,7 +175,7 @@ namespace Fluid
 					continue;
 				}
 
-				Render::particle& neighbour = Render::GetParticle(i);
+				Render::particle& neighbour = Render::GetParticle(j);
 				
 
 				float dist = distance(particle, neighbour);
@@ -195,13 +195,13 @@ namespace Fluid
 						float& spring = const_cast<float&>(it->restSpring);
 
 						float Deform = yieldRatio * spring;
-						if (dist > interactionRadius + Deform)	// Stretch
+						if (influense > interactionRadius + Deform)	// Stretch
 						{
-							spring = spring + dt * Stretch * (dist - interactionRadius - Deform);
+							spring +=  dt * Stretch * (influense - interactionRadius - Deform);
 						}
-						else if (dist < interactionRadius - Deform)	// Compress
+						else if (influense < interactionRadius - Deform)	// Compress
 						{
-							spring = spring - dt * Compress * (interactionRadius - Deform - dist);
+							spring -=  dt * Compress * (interactionRadius - Deform - influense);
 						}
 					}
 
@@ -224,8 +224,8 @@ namespace Fluid
 
 	void Simulation::doubleDensityRelaxation(float dt)
 	{
-		const float pressureMultiplier = 4.0f; // Adjust as needed
-		const float pressureNearMultiplier = 10.0f; // Adjust as needed
+		const float pressureMultiplier = 8.0f; // Adjust as needed
+		const float pressureNearMultiplier = 20.0f; // Adjust as needed
 
 		for (int i = 0; i < circleIDs.size(); i++)
 		{
@@ -295,7 +295,7 @@ namespace Fluid
 
 	void Simulation::springDisplacement(float dt)
 	{
-		const float springConstant = 0.3f;
+		const float springConstant = 1.0f;
 
 		for (const auto& springPair : springPairs)
 		{
@@ -307,7 +307,8 @@ namespace Fluid
 			const Vector2f q = (neighbour.pos - particle.pos) / interactionRadius;
 			Vector2f qN = q;
 			qN.Normalize();
-			const Vector2f D = dt * dt * springConstant * ((1 - springPair.restSpring) / interactionRadius) * (springPair.restSpring - interactionRadius) * qN;
+
+			const Vector2f D = dt * dt * springConstant * (1 - (springPair.restSpring / interactionRadius)) * (springPair.restSpring - q.Length()) * qN;
 			particle.pos -= D / 2.0f;
 			neighbour.pos += D / 2.0f;
 		}
@@ -316,8 +317,8 @@ namespace Fluid
 
 	void Simulation::updateNeighbours()
 	{
+		// Something incorrect here...
 		neighbourList.clear();
-
 		for (int i = 0; i < circleIDs.size(); i++)
 		{
 			Render::particle& particle = Render::GetParticle(i);

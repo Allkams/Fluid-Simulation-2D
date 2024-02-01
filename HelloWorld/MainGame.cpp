@@ -6,11 +6,11 @@
 #include "Simulation.h"
 #include <cmath>
 
-const int DISPLAY_WIDTH = 1920;	//School
-const int DISPLAY_HEIGHT = 1080;	//School
+//const int DISPLAY_WIDTH = 1920;	//School
+//const int DISPLAY_HEIGHT = 1080;	//School
 
-//const int DISPLAY_WIDTH = 1400;		//Laptop
-//const int DISPLAY_HEIGHT = 750;		//Laptop
+const int DISPLAY_WIDTH = 1920 * 0.92f;		//Laptop
+const int DISPLAY_HEIGHT = 1080 * 0.92f;		//Laptop
 
 const int DISPLAY_SCALE = 1;
 
@@ -22,7 +22,7 @@ double Min = 100.0;
 std::vector<uint32_t> circles;
 int size = 0;
 
-int ParticleAmmount = 100;
+int ParticleAmmount = 500;
 int RowSize = 20;
 const short gap = 10;
 
@@ -70,7 +70,7 @@ void MainGameEntry( PLAY_IGNORE_COMMAND_LINE )
 {
 	GenerateGrid();
 
-	Render::Boundary::instance().resize(500, 500);
+	Render::Boundary::instance().resize(400, 400);
 	Render::Boundary::instance().move({ DISPLAY_WIDTH /2, DISPLAY_HEIGHT /2 });
 
 	Play::CreateManager( DISPLAY_WIDTH, DISPLAY_HEIGHT, DISPLAY_SCALE );
