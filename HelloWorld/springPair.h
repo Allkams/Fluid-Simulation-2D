@@ -6,7 +6,7 @@ struct SpringPair
 	uint32_t index2;
 	float restSpring;
 
-	SpringPair(uint32_t i, uint32_t j, float f) : index1(i), index2(j), restSpring(f) {};
+	SpringPair(uint32_t i, uint32_t j, float f = 0) : index1(i), index2(j), restSpring(f) {};
 
 	// Define equality operator for SpringPair
 	bool operator==(const SpringPair& other) const {

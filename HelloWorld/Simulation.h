@@ -27,10 +27,10 @@ namespace Fluid
 
 		void updateNeighbours();
 
-		const float interactionRadius = 20.0f;
+		const float interactionRadius = 16.0f;
 
 		std::vector<uint32_t> circleIDs;
-		std::unordered_set<SpringPair> springPairs;
+		std::vector<SpringPair> springPairs;
 		std::unordered_map<uint32_t, std::vector<uint32_t>> neighbourList;
 	private:
 		Simulation() {};

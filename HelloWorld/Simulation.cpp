@@ -29,13 +29,13 @@ namespace Fluid
 
 		const float dampFactor = 0.95f;
 		std::vector<Vector2f> prevPositons;
-		for (int i = 0; i < circleIDs.size(); i++)
+		/*for (int i = 0; i < circleIDs.size(); i++)
 		{
 			Render::particle& particle = Render::GetParticle(i);
 			particle.vel.y += 40.0f * 0.01667f;
-		}
+		}*/
 
-		applyViscosity(0.01667f);
+		//applyViscosity(0.01667f);
 
 		for (int i = 0; i < circleIDs.size(); i++)
 		{
@@ -47,7 +47,7 @@ namespace Fluid
 
 		springAdjustment(0.01667f);
 		springDisplacement(0.01667f);
-		doubleDensityRelaxation(0.01667f);
+		//doubleDensityRelaxation(0.01667f);
 
 		//Collision towards boundaries
 		for (int i = 0; i < circleIDs.size(); i++)
@@ -120,7 +120,7 @@ namespace Fluid
 				//const float distance = distance;
 				const float influense = distance(particle, neighbour) / interactionRadius;
 
-				if (influense < 1)
+				if (influense <= 1)
 				{
 					const Vector2f q = (neighbour.pos - particle.pos) / interactionRadius;
 					Vector2f qN = q;
@@ -139,36 +139,43 @@ namespace Fluid
 		}
 	}
 
-	bool pairExists(const std::unordered_set<SpringPair>& springPairs, uint32_t id1, uint32_t id2, float interactionRadius)
+	bool pairExists(const std::vector<SpringPair>& springPairs, SpringPair& insertPair)
 	{
-		return springPairs.find({ id1, id2, interactionRadius }) != springPairs.end();
+		//return springPairs.find({ id1, id2, interactionRadius }) != springPairs.end();
+		for (auto& pair : springPairs)
+		{
+			if (pair == insertPair)
+			{
+				return true;
+			}
+		}
+		return false;
 	}
 
-	size_t getTuple(const std::unordered_set<SpringPair>& springPairs, int id1, int id2)
+	SpringPair& getPair(std::vector<SpringPair>& springPairs, SpringPair& findPair)
 	{
-		int id = 0;
-		for (const auto& pair : springPairs) 
+		for (int i = 0; i < springPairs.size(); i++)
 		{
-			if ((pair.index1 == id1 && pair.index2 == id2) || (pair.index1 == id2 && pair.index2 == id1)) 
+			if (springPairs[i] == findPair)
 			{
-				return id;
+				return springPairs[i];
 			}
-			id++;
 		}
-		return -1;
+		return nullptr;
 	}
 
 	void Simulation::springAdjustment(float dt)
 	{
-		const float yieldRatio = 2.0f;
-		const float Stretch = 3.0f;
-		const float Compress = 3.0f;
+		const float yieldRatio = 0.2f;
+		const float Stretch = 0.3f;
+		const float Compress = 0.3f;
+		const float L = 1.0f;
 
-		for (int i = 0; i < circleIDs.size(); i++)
+		for (uint32_t i = 0; i < circleIDs.size(); i++)
 		{
 			Render::particle& particle = Render::GetParticle(i);
 
-			for (int j = i + 1; j < circleIDs.size(); j++)
+			for (uint32_t j = 0; j < circleIDs.size(); j++)
 			{
 				if (i == j)
 				{
@@ -181,27 +188,28 @@ namespace Fluid
 				float dist = distance(particle, neighbour);
 				const float influense = dist / interactionRadius;
 
-				if (influense < 1)
+				if (influense <= 1)
 				{
-					if (!pairExists(springPairs, i, j, interactionRadius)) {
-						springPairs.insert({ (uint32_t)i, (uint32_t)j, interactionRadius });
+					SpringPair pairToInsert = SpringPair(i, j, interactionRadius);
+  					if (!pairExists(springPairs, pairToInsert)) {
+						springPairs.push_back(pairToInsert);
 						//continue;
 					}
 
-					auto it = springPairs.find({ (uint32_t)i, (uint32_t)j, interactionRadius });
+					auto it = springPairs.find({ i, j, interactionRadius });
 
 					if (it != springPairs.end())
 					{
 						float& spring = const_cast<float&>(it->restSpring);
 
 						float Deform = yieldRatio * spring;
-						if (influense > interactionRadius + Deform)	// Stretch
+						if (dist > L + Deform)	// Stretch
 						{
-							spring +=  dt * Stretch * (influense - interactionRadius - Deform);
+							spring +=  dt * Stretch * (dist - L - Deform);
 						}
-						else if (influense < interactionRadius - Deform)	// Compress
+						else if (dist < L - Deform)	// Compress
 						{
-							spring -=  dt * Compress * (interactionRadius - Deform - influense);
+							spring -=  dt * Compress * (L - Deform - dist);
 						}
 					}
 
@@ -224,8 +232,8 @@ namespace Fluid
 
 	void Simulation::doubleDensityRelaxation(float dt)
 	{
-		const float pressureMultiplier = 8.0f; // Adjust as needed
-		const float pressureNearMultiplier = 20.0f; // Adjust as needed
+		const float pressureMultiplier = 4.0f; // Adjust as needed
+		const float pressureNearMultiplier = 16.0f; // Adjust as needed
 
 		for (int i = 0; i < circleIDs.size(); i++)
 		{
@@ -246,7 +254,7 @@ namespace Fluid
 
 				const float influense = dist / interactionRadius;
 
-				if (influense < 1.0f)
+				if (influense <= 1.0f)
 				{
 					d += powf(1 - influense, 2);
 					dNear += powf(1 - influense, 3);
@@ -275,7 +283,7 @@ namespace Fluid
 				qN.Normalize();
 				const float influense = q.Length();
 
-				if (influense < 1.0f)
+				if (influense <= 1.0f)
 				{
 					const Vector2f D = (dt * dt) * (P * (Vector2f(1, 1) - q) + pNear * ((Vector2f(1, 1) - q) * (Vector2f(1, 1) - q))) * qN;
 					neighbour.pos -= D / 2.0f;

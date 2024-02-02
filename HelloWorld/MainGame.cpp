@@ -22,11 +22,24 @@ double Min = 100.0;
 std::vector<uint32_t> circles;
 int size = 0;
 
-int ParticleAmmount = 500;
+int ParticleAmmount = 2;
 int RowSize = 20;
 const short gap = 10;
 
 bool bPaused = true;
+
+/* 
+ * TODOS:
+ *  - Achive pure density (Grid stacking correctly)
+ *  - Make it work with 9.82 F gravity (or 98.2)
+ *  - Spatial Neighborhood search with hash functions.
+ *  - Correct stacking.
+ *  - Particle Blending through alpha channel.
+ *  - Data oriented design for everything.
+ *		- Create one read and one write buffer for Position, Velocity, Density etc.
+ *  - Multithread system through the data oriented design pattern.
+ *  - Display more information on the screen from the simulation.
+*/
 
 
 void GenerateGrid()
