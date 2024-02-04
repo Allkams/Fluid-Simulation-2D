@@ -139,29 +139,29 @@ namespace Fluid
 		}
 	}
 
-	bool pairExists(const std::vector<SpringPair>& springPairs, SpringPair& insertPair)
-	{
-		//return springPairs.find({ id1, id2, interactionRadius }) != springPairs.end();
-		for (auto& pair : springPairs)
-		{
-			if (pair == insertPair)
-			{
-				return true;
-			}
-		}
-		return false;
-	}
+	//bool pairExists(const std::vector<SpringPair>& springPairs, SpringPair& insertPair)
+	//{
+	//	//return springPairs.find({ id1, id2, interactionRadius }) != springPairs.end();
+	//	for (auto& pair : springPairs)
+	//	{
+	//		if (pair == insertPair)
+	//		{
+	//			return true;
+	//		}
+	//	}
+	//	return false;
+	//}
 
-	SpringPair& getPair(std::vector<SpringPair>& springPairs, SpringPair& findPair)
+	int getPairID(const std::vector<SpringPair>& springPairs, const SpringPair& findPair)
 	{
 		for (int i = 0; i < springPairs.size(); i++)
 		{
 			if (springPairs[i] == findPair)
 			{
-				return springPairs[i];
+				return i;
 			}
 		}
-		return nullptr;
+		return -1;
 	}
 
 	void Simulation::springAdjustment(float dt)
@@ -169,7 +169,7 @@ namespace Fluid
 		const float yieldRatio = 0.2f;
 		const float Stretch = 0.3f;
 		const float Compress = 0.3f;
-		const float L = 1.0f;
+		const Vector2f L = {16.0f,16.0f};
 
 		for (uint32_t i = 0; i < circleIDs.size(); i++)
 		{
@@ -190,28 +190,34 @@ namespace Fluid
 
 				if (influense <= 1)
 				{
-					SpringPair pairToInsert = SpringPair(i, j, interactionRadius);
-  					if (!pairExists(springPairs, pairToInsert)) {
+					Vector2f particleDist = Vector2f(abs(neighbour.pos.x - particle.pos.x), abs(neighbour.pos.y - particle.pos.y));
+
+					SpringPair pairToInsert = SpringPair(i, j, Vector2f(interactionRadius, interactionRadius));
+					int id = getPairID(springPairs, pairToInsert);
+  					if (id == -1) {
 						springPairs.push_back(pairToInsert);
-						//continue;
+						//id = springPairs.size() - 1;
+						continue;
 					}
 
-					auto it = springPairs.find({ i, j, interactionRadius });
+					SpringPair& pair = springPairs[id];
 
-					if (it != springPairs.end())
+					Vector2f Deform = yieldRatio * pair.restSpring;
+					
+					// I do not understand what I even do...
+					if (particleDist.Length() > (L + Deform).Length())	// Stretch
 					{
-						float& spring = const_cast<float&>(it->restSpring);
-
-						float Deform = yieldRatio * spring;
-						if (dist > L + Deform)	// Stretch
-						{
-							spring +=  dt * Stretch * (dist - L - Deform);
-						}
-						else if (dist < L - Deform)	// Compress
-						{
-							spring -=  dt * Compress * (L - Deform - dist);
-						}
+  						pair.restSpring +=  dt * Stretch * (particleDist - L - Deform);
 					}
+					else if (particleDist.Length() < (L - Deform).Length())	// Compress
+					{
+						pair.restSpring -=  dt * Compress * (L - Deform - particleDist);
+					}
+
+					//if (pair.restSpring < 0.0f) // If negative
+					//{
+					//	pair.restSpring = 0.0f;
+					//}
 
 				}
 			}
@@ -219,7 +225,7 @@ namespace Fluid
 
 		for (auto it = springPairs.begin(); it != springPairs.end();)
 		{
-			if (it->restSpring > interactionRadius)
+			if (it->restSpring.x > interactionRadius && it->restSpring.y > interactionRadius)
 			{
 				it = springPairs.erase(it);
 				continue;
@@ -310,7 +316,7 @@ namespace Fluid
 			Vector2f qN = q;
 			qN.Normalize();
 
-			const Vector2f D = dt * dt * springConstant * (1 - (springPair.restSpring / interactionRadius)) * (springPair.restSpring - q.Length()) * qN;
+			const Vector2f D = dt * dt * springConstant * (Vector2f(1,1) - (springPair.restSpring / interactionRadius)) * (springPair.restSpring - q) * qN;
 			particle.pos -= D / 2.0f;
 			neighbour.pos += D / 2.0f;
 		}
