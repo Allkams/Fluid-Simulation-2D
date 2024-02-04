@@ -204,7 +204,7 @@ namespace Fluid
 
 					Vector2f Deform = yieldRatio * pair.restSpring;
 					
-					// I do not understand what I even do...
+					// I do not understand what Im even doing...
 					if (particleDist.Length() > (L + Deform).Length())	// Stretch
 					{
   						pair.restSpring +=  dt * Stretch * (particleDist - L - Deform);
