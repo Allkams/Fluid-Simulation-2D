@@ -30,15 +30,25 @@ namespace Fluid
 
 		//void updateNeighbours();
 
-		float  CalculateDensity(Vector2f& point);
+		void updateDensities();
 
-		const float interactionRadius = 16.0f;
+		float CalculateDensity(Vector2f& point);
+		float ConvertDensityToPressure(float density);
+		float CalculateProperty(int particleIndex);
+		float CalculateSharedPressure(float densityA, float densityB);
+		Vector2f& CalculatePropertyGradient(int particleIndex);
+		Vector2f& CalculatePressureForce(int particleIndex);
+
+		const float interactionRadius = 25.0f;
 		bool gravity = false;
+		const float TargetDensity = 27.5f;
+		const float pressureMultiplier = 100.0f;
 
 		std::vector<uint32_t> circleIDs;
 		std::vector<Vector2f> positions;
 		std::vector<Vector2f> velocity;
-		//std::vector<float> density;
+		std::vector<float> densities;
+		std::vector<float> particleProperties;
 		
 		std::vector<SpringPair> springPairs;
 		std::unordered_map<uint32_t, std::vector<uint32_t>> neighbourList;

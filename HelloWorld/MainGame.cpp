@@ -22,7 +22,7 @@ double Min = 100.0;
 std::vector<uint32_t> circles;
 int size = 0;
 
-int ParticleAmmount = 100;
+int ParticleAmmount = 500;
 int RowSize = 20;
 const short gap = 10;
 
@@ -147,8 +147,7 @@ bool MainGameUpdate( float elapsedTime )
 	}
 
 
-	//Vector2f pos = { Render::GetParticle(22).pos.x, Render::GetParticle(22).pos.y };
-	//Play::DrawFilledCircle(pos, 16.0f, Play::cRed, 0.5f);
+	Play::DrawFilledCircle(Fluid::Simulation::getInstance().getPosition(0), 25.0f, Play::cRed, 0.5f);
 	for (int i = 0; i < circles.size(); i++)
 	{
 		/*Render::particle& p = Render::GetParticle(i);

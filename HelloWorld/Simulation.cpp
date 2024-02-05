@@ -29,19 +29,27 @@ namespace Fluid
 
 		const float dampFactor = 0.95f;
 		std::vector<Vector2f> prevPositons;
-		if (gravity)
+		for (int i = 0; i < circleIDs.size(); i++)
 		{
-			for (int i = 0; i < circleIDs.size(); i++)
+			if (gravity)
 			{
-				//Render::particle& particle = Render::GetParticle(i);
-				velocity[i].y += 40.0f * 0.01667f;
+				velocity[i].y += 98.20f * deltatime;
 			}
+			densities[i] = CalculateDensity(positions[i]);
 		}
 
 		for (int i = 0; i < circleIDs.size(); i++)
 		{
-			prevPositons.push_back(positions[i]);
-			positions[i] += 0.01667f * velocity[i];
+			Vector2f pressureForce = CalculatePressureForce(i);
+			Vector2f pressureAcceration = pressureForce / 1.0f;
+			velocity[i] += pressureAcceration * deltatime;
+		}
+
+		for (int i = 0; i < circleIDs.size(); i++)
+		{
+			//prevPositons.push_back(positions[i]);
+			positions[i] += deltatime * velocity[i];
+			velocity[i] *= 0.99f;
 		}
 
 		//Collision towards boundaries
@@ -49,8 +57,7 @@ namespace Fluid
 		{
 			//Render::particle& particle = Render::GetParticle(i);
 
-			velocity[i] = (positions[i] - prevPositons[i]) / 0.01667f;
-			velocity[i] *= 0.99f;
+			//velocity[i] = (positions[i] - prevPositons[i]) / 0.01667f;
 
 			// Collision resolver, simple edition
 			Point2D& topLeft = Render::Boundary::instance().getTopLeft();
@@ -84,6 +91,8 @@ namespace Fluid
 		circleIDs.push_back(cID);
 		positions.push_back(pos);
 		velocity.push_back({ 0,0 });
+		densities.push_back(0);
+		particleProperties.push_back(0);
 	}
 
 	void Simulation::ClearData()
@@ -104,6 +113,23 @@ namespace Fluid
 		return positions[id];
 	}
 
+	double distance(const Render::particle& p1, const Render::particle& p2) {
+		return std::sqrt((p1.pos.x - p2.pos.x) * (p1.pos.x - p2.pos.x) + (p1.pos.y - p2.pos.y) * (p1.pos.y - p2.pos.y));
+	}
+	float distance(const Vector2f& particle1, const Vector2f& particle2) {
+		return std::sqrt((particle1.x - particle2.x) * (particle1.x - particle2.x) + (particle1.y - particle2.y) * (particle1.y - particle2.y));
+	}
+
+	void Simulation::updateDensities()
+	{
+		//TODO: Multithread
+
+		for (int i = 0; i < circleIDs.size(); i++)
+		{
+			densities[i] = CalculateDensity(positions[i]);
+		}
+	}
+
 	float Simulation::CalculateDensity(Vector2f& point)
 	{
 		float density = 0;
@@ -112,7 +138,7 @@ namespace Fluid
 		for(Vector2f& pos : positions)
 		{
 			float dist = distance(pos, point);
-			float influence = math::SmoothingKernel(interactionRadius, dist);
+			float influence = math::SmoothingKernel(dist, interactionRadius);
 			if (influence < 1.0f)
 			{
 				density += mass * influence;
@@ -121,10 +147,64 @@ namespace Fluid
 		return density;
 	}
 
-	double distance(const Render::particle& p1, const Render::particle& p2) {
-		return std::sqrt((p1.pos.x - p2.pos.x) * (p1.pos.x - p2.pos.x) + (p1.pos.y - p2.pos.y) * (p1.pos.y - p2.pos.y));
+	float Simulation::ConvertDensityToPressure(float density)
+	{
+		float densityError = density - TargetDensity;
+		float pressure = densityError * pressureMultiplier;
+		return pressure;
 	}
-	float distance(const Vector2f& particle1, const Vector2f& particle2) {
-		return std::sqrt((particle1.x - particle2.x) * (particle1.x - particle2.x) + (particle1.y - particle2.y) * (particle1.y - particle2.y));
+
+	float Simulation::CalculateProperty(int particleIndex)
+	{
+		float property = 0.0f;
+		for (int i = 0; i < circleIDs.size(); i++)
+		{
+			if (particleIndex == i) continue;
+
+			float dist = distance(positions[i], positions[particleIndex]);
+			float influence = math::SmoothingKernel(dist, interactionRadius);
+			float density = densities[i];
+			property += particleProperties[i] * 1.0f / density * influence;
+		}
+		return property;
 	}
+
+	float Simulation::CalculateSharedPressure(float densityA, float densityB)
+	{
+		float pressureA = ConvertDensityToPressure(densityA);
+		float pressureB = ConvertDensityToPressure(densityB);
+		return (pressureA + pressureB) / 2;
+	}
+
+	Vector2f& Simulation::CalculatePropertyGradient(int particleIndex)
+	{
+		Vector2f propertyGradient = {0,0};
+		for (int i = 0; i < circleIDs.size(); i++)
+		{
+			if (particleIndex == i) continue;
+			float dist = distance(positions[i], positions[particleIndex]);
+			Vector2f dir = (positions[i] - positions[particleIndex]) / dist;
+			float slope = math::SmoothingKernelDerivative(dist, interactionRadius);
+			float density = densities[i];
+			propertyGradient += -particleProperties[i] * dir * slope * 1.0f / density;
+		}
+		return propertyGradient;
+	}
+
+	Vector2f& Simulation::CalculatePressureForce(int particleIndex)
+	{
+		Vector2f pressureForce = { 0,0 };
+		for (int i = 0; i < circleIDs.size(); i++)
+		{
+			if (particleIndex == i) continue;
+			float dist = distance(positions[i], positions[particleIndex]);
+			Vector2f dir = (positions[i] - positions[particleIndex]) / dist;
+			float slope = math::SmoothingKernelDerivative(dist, interactionRadius);
+			float density = densities[i];
+			float sharedPressure = CalculateSharedPressure(density, densities[particleIndex]);
+			pressureForce += -sharedPressure * dir * slope * 1.0f / density;
+		}
+		return pressureForce;
+	}
+
 }

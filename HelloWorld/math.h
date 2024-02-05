@@ -4,27 +4,18 @@
 
 namespace math
 {
-	bool rectangleCollision(const Point2f& pos, Point2f& vel , const Point2f& topLeft, const Point2f& bottomRight)
+	static float SmoothingKernel(float dist, float radius)
 	{
-		bool hit = false;
-		const float dampFactor = 0.95f;
-		if (pos.x - 6 < topLeft.x || pos.x + 6 > bottomRight.x)
-		{
-			vel.x = -vel.x * dampFactor;
-			hit |= true;
-		}
+		if (dist >= radius) return 0;
 
-		if (pos.y - 6 < topLeft.y || pos.y + 6 > bottomRight.y)
-		{
-			vel.y = -vel.y * dampFactor;;
-			hit |= true;
-		}
-
-		return hit;
+		float volume = 3.14 * pow(radius, 4) / 6.0f;
+		return (radius - dist) * (radius - dist) / volume;
 	}
 
-	static float SmoothingKernel(float radius, float dist);
+	static float SmoothingKernelDerivative(float dist, float radius)
 	{
-
+		if (dist >= radius) return 0;
+		float scale = 12 / (pow(radius, 4) * 3.14);
+		return (dist - radius) * scale;
 	}
 }
