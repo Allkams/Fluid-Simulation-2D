@@ -73,7 +73,7 @@ void GenerateGrid()
 
 		uint32_t id = Render::CreateParticle({ x, y });
 		circles.push_back(id);
-		Fluid::Simulation::getInstance().AddCircle(id);
+		Fluid::Simulation::getInstance().AddCircle(id, {x,y});
 		size++;
 	}
 }
@@ -141,14 +141,19 @@ bool MainGameUpdate( float elapsedTime )
 		GenerateGrid();
 	}
 
+	if (Play::KeyPressed(0x47))
+	{
+		Fluid::Simulation::getInstance().toggleGravity();
+	}
+
 
 	//Vector2f pos = { Render::GetParticle(22).pos.x, Render::GetParticle(22).pos.y };
 	//Play::DrawFilledCircle(pos, 16.0f, Play::cRed, 0.5f);
 	for (int i = 0; i < circles.size(); i++)
 	{
-		Render::particle& p = Render::GetParticle(i);
-		Vector2f pos = { p.pos.x, p.pos.y };
-		Play::FastDrawFilledCircle(pos, Play::cCyan);
+		/*Render::particle& p = Render::GetParticle(i);
+		Vector2f pos = { p.pos.x, p.pos.y };*/
+		Play::FastDrawFilledCircle(Fluid::Simulation::getInstance().getPosition(i), Play::cCyan);
 	}
 	//Play::DrawFilledCircle({ DISPLAY_WIDTH / 2.0f, DISPLAY_HEIGHT / 2.0f }, 10.0f, Play::cWhite, 1.0f);
 

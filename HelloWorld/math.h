@@ -22,4 +22,9 @@ namespace math
 
 		return hit;
 	}
+
+	static float SmoothingKernel(float radius, float dist);
+	{
+
+	}
 }
