@@ -109,7 +109,6 @@ namespace Fluid
 
 	Vector2f& Simulation::getPosition(int id)
 	{
-		// TODO: insert return statement here
 		return positions[id];
 	}
 
