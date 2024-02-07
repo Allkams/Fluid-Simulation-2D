@@ -29,11 +29,11 @@ namespace Fluid
 
 		const float dampFactor = 0.95f;
 		std::vector<Vector2f> prevPositons;
-		/*for (int i = 0; i < circleIDs.size(); i++)
+		for (int i = 0; i < circleIDs.size(); i++)
 		{
 			Render::particle& particle = Render::GetParticle(i);
 			particle.vel.y += 40.0f * 0.01667f;
-		}*/
+		}
 
 		//applyViscosity(0.01667f);
 
@@ -45,9 +45,9 @@ namespace Fluid
 
 		}
 
-		springAdjustment(0.01667f);
-		springDisplacement(0.01667f);
-		//doubleDensityRelaxation(0.01667f);
+		//springAdjustment(0.01667f);
+		//springDisplacement(0.01667f);
+		doubleDensityRelaxation(0.01667f);
 
 		//Collision towards boundaries
 		for (int i = 0; i < circleIDs.size(); i++)

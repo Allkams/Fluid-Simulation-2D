@@ -22,7 +22,7 @@ double Min = 100.0;
 std::vector<uint32_t> circles;
 int size = 0;
 
-int ParticleAmmount = 100;
+int ParticleAmmount = 400;
 int RowSize = 20;
 const short gap = 10;
 
