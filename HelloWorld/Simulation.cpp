@@ -1,6 +1,8 @@
 //#define PLAY_IMPLEMENTATION
 //#define PLAY_USING_GAMEOBJECT_MANAGER
 #include "Simulation.h"
+#include <thread>
+#include <execution>
 #include "math.h"
 #include "boundary.h"
 
@@ -29,28 +31,30 @@ namespace Fluid
 
 		const float dampFactor = 0.95f;
 		std::vector<Vector2f> prevPositons;
-		for (int i = 0; i < circleIDs.size(); i++)
-		{
-			if (gravity)
+		std::for_each(std::execution::par, circleIDs.begin(), circleIDs.end(),
+			[this](uint32_t i)
 			{
-				velocity[i].y += 9.82f * deltatime;
-			}
-			densities[i] = CalculateDensity(positions[i]);
-		}
+				if (gravity)
+				{
+					velocity[i].y += 9.82f * 0.016667f;
+				}
+				densities[i] = CalculateDensity(positions[i]);
+			});
 
-		for (int i = 0; i < circleIDs.size(); i++)
+		for(int i = 0; i < circleIDs.size(); i++)
 		{
 			Vector2f pressureForce = CalculatePressureForce(i);
 			Vector2f pressureAcceration = pressureForce / 1.0f;
-			velocity[i] += pressureAcceration * deltatime;
+			velocity[i] += pressureAcceration * 0.016667f;
 		}
 
-		for (int i = 0; i < circleIDs.size(); i++)
-		{
-			//prevPositons.push_back(positions[i]);
-			positions[i] += deltatime * velocity[i];
-			velocity[i] *= 0.99f;
-		}
+		std::for_each(std::execution::par, circleIDs.begin(), circleIDs.end(),
+			[this](uint32_t i)
+			{
+				//prevPositons.push_back(positions[i]);
+				positions[i] += 0.016667f * velocity[i];
+				velocity[i] *= 0.99f;
+			});
 
 		//Collision towards boundaries
 		for (int i = 0; i < circleIDs.size(); i++)
@@ -165,14 +169,14 @@ namespace Fluid
 		float property = 0.0f;
 		std::vector<uint32_t> neighbors;
 		SpatialNeighbors(particleIndex, neighbors);
-		for (int i = 0; i < neighbors.size(); i++)
+		for (int i = 0; i < circleIDs.size(); i++)
 		{
 			if (particleIndex == i) continue;
-
-			float dist = distance(positions[i], positions[particleIndex]);
+			uint32_t index = neighbors[i];
+			float dist = distance(positions[index], positions[particleIndex]);
 			float influence = math::SmoothingKernel(dist, interactionRadius);
-			float density = densities[i];
-			property += particleProperties[i] * 1.0f / density * influence;
+			float density = densities[index];
+			property += particleProperties[index] * 1.0f / density * influence;
 		}
 		return property;
 	}
@@ -192,11 +196,12 @@ namespace Fluid
 		for (int i = 0; i < neighbors.size(); i++)
 		{
 			if (particleIndex == i) continue;
-			float dist = distance(positions[i], positions[particleIndex]);
-			Vector2f dir = (positions[i] - positions[particleIndex]) / dist;
+			uint32_t index = neighbors[i];
+			float dist = distance(positions[index], positions[particleIndex]);
+			Vector2f dir = (positions[index] - positions[particleIndex]) / dist;
 			float slope = math::SmoothingKernelDerivative(dist, interactionRadius);
-			float density = densities[i];
-			propertyGradient += -particleProperties[i] * dir * slope * 1.0f / density;
+			float density = densities[index];
+			propertyGradient += -particleProperties[index] * dir * slope * 1.0f / density;
 		}
 		return propertyGradient;
 	}
@@ -209,11 +214,11 @@ namespace Fluid
 		for (int i = 0; i < neighbors.size(); i++)
 		{
 			if (particleIndex == i) continue;
-
-			float dist = distance(positions[i], positions[particleIndex]);
-			Vector2f dir = dist == 0 ? Vector2f(Play::RandomRollRange(0,1), Play::RandomRollRange(0, 1)) : (positions[i] - positions[particleIndex]) / dist;
+			uint32_t index = neighbors[i];
+			float dist = distance(positions[index], positions[particleIndex]);
+			Vector2f dir = dist == 0 ? Vector2f(Play::RandomRollRange(0,1), Play::RandomRollRange(0, 1)) : (positions[index] - positions[particleIndex]) / dist;
 			float slope = math::SmoothingKernelDerivative(dist, interactionRadius);
-			float density = densities[i];
+			float density = densities[index];
 			float sharedPressure = CalculateSharedPressure(density, densities[particleIndex]);
 			pressureForce += -sharedPressure * dir * slope * 1.0f / density;
 		}
@@ -223,8 +228,8 @@ namespace Fluid
 
 	Vector2f PositionToCellCoord(Vector2f& pos)
 	{
-		int GridPosX = (pos.x - Render::Boundary::instance().getTopLeft().x) / 100.0f;
-		int GridPosY = (pos.y - Render::Boundary::instance().getTopLeft().y) / 100.0f;
+		int GridPosX = (pos.x /*- Render::Boundary::instance().getTopLeft().x*/) / 100.0f;
+		int GridPosY = (pos.y /*- Render::Boundary::instance().getTopLeft().y*/) / 100.0f;
 		return { GridPosX, GridPosY };
 	}
 
@@ -242,27 +247,34 @@ namespace Fluid
 	//Might be incorrect...
 	void Simulation::UpdateSpatialLookup()
 	{
-		spatialLookup.clear();
-		startIndices.clear();
-		for (uint32_t i = 0; i < circleIDs.size(); i++)
-		{ 
-			Vector2f cellPos = PositionToCellCoord(positions[i]);
-			uint32_t cellKey = GetKeyFromHash(HashCell(cellPos.x, cellPos.y), circleIDs.size());
-			spatialLookup.push_back({cellKey, i });
-			startIndices.push_back(INT_MAX);
+		/*spatialLookup.clear();
+		startIndices.clear();*/
+		if (spatialLookup.size() == 0)
+		{
+			spatialLookup.resize(circleIDs.size());
+			startIndices.resize(circleIDs.size());
 		}
+		std::for_each(std::execution::par, circleIDs.begin(), circleIDs.end(),
+			[this](uint32_t i)
+			{
+				Vector2f cellPos = PositionToCellCoord(positions[i]);
+				uint32_t cellKey = GetKeyFromHash(HashCell(cellPos.x, cellPos.y), circleIDs.size());
+				spatialLookup[i] = { cellKey, i };
+				startIndices[i] = INT_MAX;
+			});
 
 		std::sort(spatialLookup.begin(), spatialLookup.end(), compareByKey);
 
-		for (int i = 0; i < circleIDs.size(); i++)
-		{
-			uint32_t key = spatialLookup[i].key;
-			uint32_t keyPrev = i == 0 ? UINT32_MAX : spatialLookup[i - 1].key;
-			if (key != keyPrev)
+		std::for_each(std::execution::par, circleIDs.begin(), circleIDs.end(),
+			[this](uint32_t i)
 			{
-				startIndices[key] = i;
-			}
-		}
+				uint32_t key = spatialLookup[i].key;
+				uint32_t keyPrev = i == 0 ? UINT32_MAX : spatialLookup[i - 1].key;
+				if (key != keyPrev)
+				{
+					startIndices[key] = i;
+				}
+			});
 
 	}
 

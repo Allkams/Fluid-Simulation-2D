@@ -13,6 +13,7 @@ namespace Fluid
 	{
 		uint32_t key;
 		uint32_t index;
+		SpatialStruct() : key(UINT32_MAX), index(UINT32_MAX) {};
 		SpatialStruct(uint32_t inKey, uint32_t inIndex) : key(inKey), index(inIndex) {};
 	};
 
