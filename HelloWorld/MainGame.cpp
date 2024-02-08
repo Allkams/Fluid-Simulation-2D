@@ -5,6 +5,8 @@
 #include "boundary.h"
 #include "Simulation.h"
 #include <cmath>
+#include <thread>
+#include <execution>
 
 //const int DISPLAY_WIDTH = 1920;	//School
 //const int DISPLAY_HEIGHT = 1080;	//School
@@ -169,25 +171,26 @@ bool MainGameUpdate( float elapsedTime )
 	}
 
 
-	for (int i = 0; i < circles.size(); i++)
-	{
-		/*Render::particle& p = Render::GetParticle(i);
-		Vector2f pos = { p.pos.x, p.pos.y };*/
-		Play::FastDrawFilledCircle(Fluid::Simulation::getInstance().getPosition(i), Play::cCyan);
-	}
-	Vector2f pos = Fluid::Simulation::getInstance().getPosition(0);
-	//Play::DrawFilledCircle(pos, 120.0f, Play::cRed, 0.5f);
-	//Play::DrawFilledCircle(pos, 5.0f, Play::cWhite);
-	int GridPosX = (pos.x - offsetTo0X) / 100.0f;
-	int GridPosY = (pos.y - offsetTo0Y) / 100.0f;
-	int arrayPos = GridPosY * maxInstancesWidth + GridPosX;
-	//Play::DrawFilledCircle({ DISPLAY_WIDTH / 2.0f, DISPLAY_HEIGHT / 2.0f }, 10.0f, Play::cWhite, 1.0f);
+	std::for_each(std::execution::par, circles.begin(), circles.end(),
+		[](uint32_t i)
+		{
+			/*Render::particle& p = Render::GetParticle(i);
+			Vector2f pos = { p.pos.x, p.pos.y };*/
+			Play::FastDrawFilledCircle(Fluid::Simulation::getInstance().getPosition(i), Play::cCyan);
+		});
+	//Vector2f pos = Fluid::Simulation::getInstance().getPosition(0);
+	////Play::DrawFilledCircle(pos, 120.0f, Play::cRed, 0.5f);
+	////Play::DrawFilledCircle(pos, 5.0f, Play::cWhite);
+	//int GridPosX = (pos.x - offsetTo0X) / 100.0f;
+	//int GridPosY = (pos.y - offsetTo0Y) / 100.0f;
+	//int arrayPos = GridPosY * maxInstancesWidth + GridPosX;
+	////Play::DrawFilledCircle({ DISPLAY_WIDTH / 2.0f, DISPLAY_HEIGHT / 2.0f }, 10.0f, Play::cWhite, 1.0f);
 
-	for (int i = 0; i < hashGridSize; i++)
-	{
-		Play::DrawRect({ GridX[i] - 50.0f, GridY[i] - 50.0f }, { GridX[i] + 50.0f, GridY[i] + 50.0f }, Play::cRed);
-	}
-	Play::DrawRect({ GridX[arrayPos] - 50.0f, GridY[arrayPos] - 50.0f }, { GridX[arrayPos] + 50.0f, GridY[arrayPos] + 50.0f }, Play::cGrey);
+	//for (int i = 0; i < hashGridSize; i++)
+	//{
+	//	Play::DrawRect({ GridX[i] - 50.0f, GridY[i] - 50.0f }, { GridX[i] + 50.0f, GridY[i] + 50.0f }, Play::cRed);
+	//}
+	//Play::DrawRect({ GridX[arrayPos] - 50.0f, GridY[arrayPos] - 50.0f }, { GridX[arrayPos] + 50.0f, GridY[arrayPos] + 50.0f }, Play::cGrey);
 
 	double elapseOld = std::chrono::duration<double>(timeEndOld - timeStartOld).count();
 

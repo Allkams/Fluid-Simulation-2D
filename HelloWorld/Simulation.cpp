@@ -57,37 +57,38 @@ namespace Fluid
 			});
 
 		//Collision towards boundaries
-		for (int i = 0; i < circleIDs.size(); i++)
-		{
-			//Render::particle& particle = Render::GetParticle(i);
+		std::for_each(std::execution::par, circleIDs.begin(), circleIDs.end(),
+			[this, dampFactor](uint32_t i)
+			{
+				//Render::particle& particle = Render::GetParticle(i);
 
-			//velocity[i] = (positions[i] - prevPositons[i]) / 0.01667f;
+				//velocity[i] = (positions[i] - prevPositons[i]) / 0.01667f;
 
-			// Collision resolver, simple edition
-			Point2D& topLeft = Render::Boundary::instance().getTopLeft();
-			Point2D& bottomRight = Render::Boundary::instance().getBottomRight();
-			if (positions[i].x - 4 < topLeft.x)
-			{
-				positions[i].x = topLeft.x + 4;
-				velocity[i].x = -velocity[i].x * dampFactor;
-			}
-			else if (positions[i].x + 4 >= bottomRight.x)
-			{
-				positions[i].x = bottomRight.x - 4;
-				velocity[i].x = -velocity[i].x * dampFactor;
-			}
+				// Collision resolver, simple edition
+				Point2D& topLeft = Render::Boundary::instance().getTopLeft();
+				Point2D& bottomRight = Render::Boundary::instance().getBottomRight();
+				if (positions[i].x - 4 < topLeft.x)
+				{
+					positions[i].x = topLeft.x + 4;
+					velocity[i].x = -velocity[i].x * dampFactor;
+				}
+				else if (positions[i].x + 4 >= bottomRight.x)
+				{
+					positions[i].x = bottomRight.x - 4;
+					velocity[i].x = -velocity[i].x * dampFactor;
+				}
 
-			if (positions[i].y - 4 < topLeft.y)
-			{
-				positions[i].y = topLeft.y + 4;
-				velocity[i].y = -velocity[i].y * dampFactor;
-			}
-			else if (positions[i].y + 4 >= bottomRight.y)
-			{
-				positions[i].y = bottomRight.y - 4;
-				velocity[i].y = -velocity[i].y * dampFactor;
-			}
-		}
+				if (positions[i].y - 4 < topLeft.y)
+				{
+					positions[i].y = topLeft.y + 4;
+					velocity[i].y = -velocity[i].y * dampFactor;
+				}
+				else if (positions[i].y + 4 >= bottomRight.y)
+				{
+					positions[i].y = bottomRight.y - 4;
+					velocity[i].y = -velocity[i].y * dampFactor;
+				}
+			});
 	}
 
 	void Simulation::AddCircle(uint32_t cID, const Vector2f& pos)
