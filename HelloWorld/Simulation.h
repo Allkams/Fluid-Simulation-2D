@@ -9,6 +9,17 @@
 
 namespace Fluid
 {
+	struct SpatialStruct
+	{
+		uint32_t key;
+		uint32_t index;
+		SpatialStruct(uint32_t inKey, uint32_t inIndex) : key(inKey), index(inIndex) {};
+	};
+
+	inline bool compareByKey(const SpatialStruct& a, const SpatialStruct& b)
+	{
+		return a.key < b.key;
+	}
 
 	class Simulation
 	{
@@ -41,6 +52,7 @@ namespace Fluid
 		Vector2f& CalculatePressureForce(int particleIndex);
 
 		void UpdateSpatialLookup();
+		void SpatialNeighbors(int particleIndex, std::vector<uint32_t>& callback);
 
 		const float interactionRadius = 120.0f;
 		bool gravity = false;
@@ -49,7 +61,8 @@ namespace Fluid
 
 		std::vector<uint32_t> circleIDs;
 
-		std::map<uint32_t, uint32_t> spatialLookup;
+		//std::map<uint32_t, uint32_t> spatialLookup;
+		std::vector<SpatialStruct> spatialLookup;
 		std::vector<uint32_t> startIndices;
 
 		std::vector<Vector2f> positions;

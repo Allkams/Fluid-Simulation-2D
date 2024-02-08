@@ -119,6 +119,10 @@ namespace Fluid
 		return std::sqrt((particle1.x - particle2.x) * (particle1.x - particle2.x) + (particle1.y - particle2.y) * (particle1.y - particle2.y));
 	}
 
+	float distanceSquared(const Vector2f& particle1, const Vector2f& particle2) {
+		return (particle1.x - particle2.x) * (particle1.x - particle2.x) + (particle1.y - particle2.y) * (particle1.y - particle2.y);
+	}
+
 	void Simulation::updateDensities()
 	{
 		//TODO: Multithread
@@ -159,7 +163,9 @@ namespace Fluid
 	float Simulation::CalculateProperty(int particleIndex)
 	{
 		float property = 0.0f;
-		for (int i = 0; i < circleIDs.size(); i++)
+		std::vector<uint32_t> neighbors;
+		SpatialNeighbors(particleIndex, neighbors);
+		for (int i = 0; i < neighbors.size(); i++)
 		{
 			if (particleIndex == i) continue;
 
@@ -181,7 +187,9 @@ namespace Fluid
 	Vector2f& Simulation::CalculatePropertyGradient(int particleIndex)
 	{
 		Vector2f propertyGradient = {0,0};
-		for (int i = 0; i < circleIDs.size(); i++)
+		std::vector<uint32_t> neighbors;
+		SpatialNeighbors(particleIndex, neighbors);
+		for (int i = 0; i < neighbors.size(); i++)
 		{
 			if (particleIndex == i) continue;
 			float dist = distance(positions[i], positions[particleIndex]);
@@ -196,7 +204,9 @@ namespace Fluid
 	Vector2f& Simulation::CalculatePressureForce(int particleIndex)
 	{
 		Vector2f pressureForce = { 0,0 };
-		for (int i = 0; i < circleIDs.size(); i++)
+		std::vector<uint32_t> neighbors;
+		SpatialNeighbors(particleIndex, neighbors);
+		for (int i = 0; i < neighbors.size(); i++)
 		{
 			if (particleIndex == i) continue;
 
@@ -229,27 +239,60 @@ namespace Fluid
 	{
 		return hash % spatialLength;
 	}
-
+	//Might be incorrect...
 	void Simulation::UpdateSpatialLookup()
 	{
-		for (int i = 0; i < circleIDs.size(); i++)
-		{
+		spatialLookup.clear();
+		startIndices.clear();
+		for (uint32_t i = 0; i < circleIDs.size(); i++)
+		{ 
 			Vector2f cellPos = PositionToCellCoord(positions[i]);
 			uint32_t cellKey = GetKeyFromHash(HashCell(cellPos.x, cellPos.y), circleIDs.size());
-			spatialLookup.insert({ i, cellKey });
+			spatialLookup.push_back({cellKey, i });
 			startIndices.push_back(INT_MAX);
 		}
 
+		std::sort(spatialLookup.begin(), spatialLookup.end(), compareByKey);
+
 		for (int i = 0; i < circleIDs.size(); i++)
 		{
-			uint32_t key = spatialLookup[i];
-			uint32_t keyPrev = i == 0 ? UINT32_MAX : spatialLookup[i - 1];
+			uint32_t key = spatialLookup[i].key;
+			uint32_t keyPrev = i == 0 ? UINT32_MAX : spatialLookup[i - 1].key;
 			if (key != keyPrev)
 			{
 				startIndices[key] = i;
 			}
 		}
 
+	}
+
+	void Simulation::SpatialNeighbors(int particleIndex, std::vector<uint32_t>& callback)
+	{
+		Vector2f CellPos = PositionToCellCoord(positions[particleIndex]);
+		float sqrRadius = interactionRadius * interactionRadius;
+		
+		Vector2f offsets[9] = { {-1,-1}, {0, -1 }, {1, -1}, {-1, 0}, {0,0}, {1, 0}, {-1, 1}, {0,1}, {1,1} };
+
+		for (auto& offset : offsets)
+		{
+			uint32_t key = GetKeyFromHash(HashCell(CellPos.x + offset.x, CellPos.y + offset.y), spatialLookup.size());
+			int cellStartIndex = startIndices[key];
+
+			for (int i = cellStartIndex; i < spatialLookup.size(); i++)
+			{
+				if (spatialLookup[i].key != key) break;
+
+
+				uint32_t index = spatialLookup[i].index;
+				if (particleIndex == index) continue;
+				float sqrDist = distanceSquared(positions[particleIndex], positions[index]);
+
+				if (sqrDist <= sqrRadius)
+				{
+					callback.push_back(index);
+				}
+			}
+		}
 	}
 
 }
