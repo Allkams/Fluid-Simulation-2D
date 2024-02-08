@@ -2,6 +2,7 @@
 #include <vector>
 #include <unordered_set>
 #include <unordered_map>
+#include <map>
 #include "Play.h"
 #include "particle.h"
 #include "springPair.h"
@@ -39,12 +40,18 @@ namespace Fluid
 		Vector2f& CalculatePropertyGradient(int particleIndex);
 		Vector2f& CalculatePressureForce(int particleIndex);
 
+		void UpdateSpatialLookup();
+
 		const float interactionRadius = 120.0f;
 		bool gravity = false;
 		const float TargetDensity = 275.0f;
 		const float pressureMultiplier = 0.5f * 100.0f;
 
 		std::vector<uint32_t> circleIDs;
+
+		std::map<uint32_t, uint32_t> spatialLookup;
+		std::vector<uint32_t> startIndices;
+
 		std::vector<Vector2f> positions;
 		std::vector<Vector2f> velocity;
 		std::vector<float> densities;

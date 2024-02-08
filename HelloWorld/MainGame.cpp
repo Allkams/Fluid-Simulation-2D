@@ -22,12 +22,19 @@ double Min = 100.0;
 std::vector<uint32_t> circles;
 int size = 0;
 
-int ParticleAmmount = 400;
+int ParticleAmmount = 100;
 int RowSize = 20;
 const short gap = 10;
 
 bool bPaused = true;
 
+int hashGridSize = 60;
+std::vector<float> GridX;
+std::vector<float> GridY;
+int maxInstancesWidth;
+int maxInstancesHeight;
+int offsetTo0X;
+int offsetTo0Y;
 /* 
  * TODOS:
  *  - Achive pure density (Grid stacking correctly)
@@ -52,7 +59,7 @@ void GenerateGrid()
 		size = 0;
 	}
 
-	int totalWidth = ParticleAmmount > RowSize ? 0 : ParticleAmmount% RowSize;
+	int totalWidth = ParticleAmmount > RowSize ? 0 : ParticleAmmount % RowSize;
 	int TotalOffsetFromCenterWidth = totalWidth == 0 ? RowSize * gap : totalWidth * gap;
 
 	int totalHeight = ceil((float)ParticleAmmount / (float)RowSize);
@@ -83,8 +90,23 @@ void MainGameEntry( PLAY_IGNORE_COMMAND_LINE )
 {
 	GenerateGrid();
 
-	Render::Boundary::instance().resize(400, 400);
+	Render::Boundary::instance().resize(1500, 900);
 	Render::Boundary::instance().move({ DISPLAY_WIDTH /2, DISPLAY_HEIGHT /2 });
+
+	int startX = Render::Boundary::instance().getTopLeft().x + 50;
+	int startY = Render::Boundary::instance().getTopLeft().y + 50;
+	offsetTo0X = Render::Boundary::instance().getTopLeft().x;
+	offsetTo0Y = Render::Boundary::instance().getTopLeft().y;
+	maxInstancesWidth = Render::Boundary::instance().getWidth() / 100.0f;
+	maxInstancesHeight = Render::Boundary::instance().getHeight() / 100.0f;
+
+	hashGridSize = maxInstancesWidth * maxInstancesHeight;
+
+	for (int i = 0; i < hashGridSize; i++)
+	{
+		GridX.push_back(startX + (i % maxInstancesWidth) * 100);
+		GridY.push_back(startY + (i / maxInstancesWidth) * 100);
+	}
 
 	Play::CreateManager( DISPLAY_WIDTH, DISPLAY_HEIGHT, DISPLAY_SCALE );
 }
@@ -147,15 +169,25 @@ bool MainGameUpdate( float elapsedTime )
 	}
 
 
-	//Play::DrawFilledCircle(Fluid::Simulation::getInstance().getPosition(0), 25.0f, Play::cRed, 0.5f);
 	for (int i = 0; i < circles.size(); i++)
 	{
 		/*Render::particle& p = Render::GetParticle(i);
 		Vector2f pos = { p.pos.x, p.pos.y };*/
 		Play::FastDrawFilledCircle(Fluid::Simulation::getInstance().getPosition(i), Play::cCyan);
 	}
+	Vector2f pos = Fluid::Simulation::getInstance().getPosition(0);
+	//Play::DrawFilledCircle(pos, 120.0f, Play::cRed, 0.5f);
+	//Play::DrawFilledCircle(pos, 5.0f, Play::cWhite);
+	int GridPosX = (pos.x - offsetTo0X) / 100.0f;
+	int GridPosY = (pos.y - offsetTo0Y) / 100.0f;
+	int arrayPos = GridPosY * maxInstancesWidth + GridPosX;
 	//Play::DrawFilledCircle({ DISPLAY_WIDTH / 2.0f, DISPLAY_HEIGHT / 2.0f }, 10.0f, Play::cWhite, 1.0f);
 
+	for (int i = 0; i < hashGridSize; i++)
+	{
+		Play::DrawRect({ GridX[i] - 50.0f, GridY[i] - 50.0f }, { GridX[i] + 50.0f, GridY[i] + 50.0f }, Play::cRed);
+	}
+	Play::DrawRect({ GridX[arrayPos] - 50.0f, GridY[arrayPos] - 50.0f }, { GridX[arrayPos] + 50.0f, GridY[arrayPos] + 50.0f }, Play::cGrey);
 
 	double elapseOld = std::chrono::duration<double>(timeEndOld - timeStartOld).count();
 

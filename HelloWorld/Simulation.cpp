@@ -25,7 +25,7 @@ namespace Fluid
 
 	void Simulation::Update(float deltatime)
 	{
-		//updateNeighbours();
+		UpdateSpatialLookup();
 
 		const float dampFactor = 0.95f;
 		std::vector<Vector2f> prevPositons;
@@ -209,6 +209,47 @@ namespace Fluid
 		}
 
 		return pressureForce;
+	}
+
+	Vector2f PositionToCellCoord(Vector2f& pos)
+	{
+		int GridPosX = (pos.x - Render::Boundary::instance().getTopLeft().x) / 100.0f;
+		int GridPosY = (pos.y - Render::Boundary::instance().getTopLeft().y) / 100.0f;
+		return { GridPosX, GridPosY };
+	}
+
+	uint32_t HashCell(int X, int Y)
+	{
+		uint32_t a = (uint32_t)X * 15823;
+		uint32_t b = (uint32_t)Y * 9737333;
+		return a + b;
+	}
+
+	uint32_t GetKeyFromHash(uint32_t hash, uint32_t spatialLength)
+	{
+		return hash % spatialLength;
+	}
+
+	void Simulation::UpdateSpatialLookup()
+	{
+		for (int i = 0; i < circleIDs.size(); i++)
+		{
+			Vector2f cellPos = PositionToCellCoord(positions[i]);
+			uint32_t cellKey = GetKeyFromHash(HashCell(cellPos.x, cellPos.y), circleIDs.size());
+			spatialLookup.insert({ i, cellKey });
+			startIndices.push_back(INT_MAX);
+		}
+
+		for (int i = 0; i < circleIDs.size(); i++)
+		{
+			uint32_t key = spatialLookup[i];
+			uint32_t keyPrev = i == 0 ? UINT32_MAX : spatialLookup[i - 1];
+			if (key != keyPrev)
+			{
+				startIndices[key] = i;
+			}
+		}
+
 	}
 
 }

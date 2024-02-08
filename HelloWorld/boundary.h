@@ -15,6 +15,8 @@ namespace Render
 
 		Point2D& getTopLeft();
 		Point2D& getBottomRight();
+		float getWidth();
+		float getHeight();
 
 	private:
 

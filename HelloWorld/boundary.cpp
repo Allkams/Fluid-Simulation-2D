@@ -31,9 +31,17 @@ namespace Render
 	{
 		return bottomRight;
 	}
+	float Boundary::getWidth()
+	{
+		return this->width;
+	}
+	float Boundary::getHeight()
+	{
+		return this->height;
+	}
 	void Boundary::recalcSize()
 	{
-		topLeft = { center.x - width, center.y - height };
-		bottomRight = { center.x + width, center.y + height };
+		topLeft = { center.x - (width / 2.0f), center.y - (height / 2.0f) };
+		bottomRight = { center.x + (width / 2.0f), center.y + (height/ 2.0f)};
 	}
 }
