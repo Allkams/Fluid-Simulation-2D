@@ -33,7 +33,7 @@ namespace Fluid
 		{
 			if (gravity)
 			{
-				velocity[i].y += 98.20f * deltatime;
+				velocity[i].y += 9.82f * deltatime;
 			}
 			densities[i] = CalculateDensity(positions[i]);
 		}
@@ -137,12 +137,15 @@ namespace Fluid
 		for(Vector2f& pos : positions)
 		{
 			float dist = distance(pos, point);
+			if (dist > interactionRadius) continue;
+
 			float influence = math::SmoothingKernel(dist, interactionRadius);
-			if (influence < 1.0f)
-			{
+			/*if (influence < 1.0f)
+			{*/
 				density += mass * influence;
-			}
+			//}
 		}
+		assert(density != 0.0f);
 		return density;
 	}
 
@@ -196,13 +199,15 @@ namespace Fluid
 		for (int i = 0; i < circleIDs.size(); i++)
 		{
 			if (particleIndex == i) continue;
+
 			float dist = distance(positions[i], positions[particleIndex]);
-			Vector2f dir = (positions[i] - positions[particleIndex]) / dist;
+			Vector2f dir = dist == 0 ? Vector2f(Play::RandomRollRange(0,1), Play::RandomRollRange(0, 1)) : (positions[i] - positions[particleIndex]) / dist;
 			float slope = math::SmoothingKernelDerivative(dist, interactionRadius);
 			float density = densities[i];
 			float sharedPressure = CalculateSharedPressure(density, densities[particleIndex]);
 			pressureForce += -sharedPressure * dir * slope * 1.0f / density;
 		}
+
 		return pressureForce;
 	}
 

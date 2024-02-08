@@ -39,10 +39,10 @@ namespace Fluid
 		Vector2f& CalculatePropertyGradient(int particleIndex);
 		Vector2f& CalculatePressureForce(int particleIndex);
 
-		const float interactionRadius = 25.0f;
+		const float interactionRadius = 120.0f;
 		bool gravity = false;
-		const float TargetDensity = 27.5f;
-		const float pressureMultiplier = 100.0f;
+		const float TargetDensity = 275.0f;
+		const float pressureMultiplier = 0.5f * 100.0f;
 
 		std::vector<uint32_t> circleIDs;
 		std::vector<Vector2f> positions;
