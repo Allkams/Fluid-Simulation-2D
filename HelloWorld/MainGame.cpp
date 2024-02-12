@@ -138,16 +138,6 @@ bool MainGameUpdate( float elapsedTime )
 	}
 	auto timeEndOld = std::chrono::steady_clock::now();
 
-	if (Play::KeyPressed(VK_RIGHT))
-	{
-		ParticleAmmount++;
-		GenerateGrid();
-	}
-	if (Play::KeyPressed(VK_LEFT))
-	{
-		ParticleAmmount--;
-		GenerateGrid();
-	}
 	if (Play::KeyPressed(VK_UP))
 	{
 		RowSize++;

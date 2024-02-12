@@ -55,10 +55,10 @@ namespace Fluid
 		void UpdateSpatialLookup();
 		void SpatialNeighbors(int particleIndex, std::vector<uint32_t>& callback);
 
-		const float interactionRadius = 120.0f;
+		const float interactionRadius = 50.0f;
 		bool gravity = false;
-		const float TargetDensity = 275.0f;
-		const float pressureMultiplier = 0.5f * 100.0f;
+		const float TargetDensity = 2.75f;
+		const float pressureMultiplier = 0.5f;
 
 		std::vector<uint32_t> circleIDs;
 
@@ -67,12 +67,11 @@ namespace Fluid
 		std::vector<uint32_t> startIndices;
 
 		std::vector<Vector2f> positions;
+		std::vector<Vector2f> predictedPositions;
 		std::vector<Vector2f> velocity;
 		std::vector<float> densities;
 		std::vector<float> particleProperties;
 		
-		std::vector<SpringPair> springPairs;
-		std::unordered_map<uint32_t, std::vector<uint32_t>> neighbourList;
 	private:
 		Simulation() {};
 		Simulation(const Simulation& other) = delete;
