@@ -34,6 +34,9 @@ namespace Fluid
 
 		void toggleGravity();
 		Vector2f& getPosition(int id);
+		Vector2f& getVelocity(int id);
+		float getSpeed(int id);
+		float getSpeedNormalized(int id);
 
 	private:
 
@@ -49,8 +52,8 @@ namespace Fluid
 
 		const float interactionRadius = 35.0f;
 		bool gravity = false;
-		const float TargetDensity = 0.1f;
-		const float pressureMultiplier = 200.0f;
+		const float TargetDensity = 10.0f;
+		const float pressureMultiplier = 30.0f;
 
 		const float DT = 1.0f / 60.0f;
 

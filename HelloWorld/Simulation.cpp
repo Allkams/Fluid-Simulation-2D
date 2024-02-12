@@ -112,6 +112,22 @@ namespace Fluid
 		return positions[id];
 	}
 
+	Vector2f& Simulation::getVelocity(int id)
+	{
+		return velocity[id];
+	}
+
+	float Simulation::getSpeed(int id)
+	{
+		return velocity[id].Length();
+	}
+
+	float Simulation::getSpeedNormalized(int id)
+	{
+		
+		return velocity[id].Length() / 100.0f;
+	}
+
 	double distance(const Render::particle& p1, const Render::particle& p2) {
 		return std::sqrt((p1.pos.x - p2.pos.x) * (p1.pos.x - p2.pos.x) + (p1.pos.y - p2.pos.y) * (p1.pos.y - p2.pos.y));
 	}

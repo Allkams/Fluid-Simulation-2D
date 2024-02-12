@@ -114,10 +114,10 @@ void MainGameEntry( PLAY_IGNORE_COMMAND_LINE )
 }
 
 // Called by PlayBuffer every frame (60 times a second!)
-bool MainGameUpdate( float elapsedTime )
+bool MainGameUpdate(float elapsedTime)
 {
 	auto timeStart = std::chrono::steady_clock::now();
-	Play::ClearDrawingBuffer( Play::cBlack );
+	Play::ClearDrawingBuffer(Play::cBlack);
 
 	//Simulation
 
@@ -160,27 +160,16 @@ bool MainGameUpdate( float elapsedTime )
 		Fluid::Simulation::getInstance().toggleGravity();
 	}
 
+	Vector3f blue = { 0, 0, 100 };
+	Vector3f red = {100, 0, 0};
 
 	std::for_each(std::execution::par, circles.begin(), circles.end(),
-		[](uint32_t i)
+		[blue, red](uint32_t i)
 		{
-			/*Render::particle& p = Render::GetParticle(i);
-			Vector2f pos = { p.pos.x, p.pos.y };*/
-			Play::FastDrawFilledCircle(Fluid::Simulation::getInstance().getPosition(i), Play::cCyan);
+			Vector3f color = (1.0f - Fluid::Simulation::getInstance().getSpeedNormalized(i)) * blue + Fluid::Simulation::getInstance().getSpeedNormalized(i) * red;
+			Play::Colour displayColor = Play::Colour((int)color.x, (int)color.y, (int)color.w);
+			Play::DrawFilledCircle(Fluid::Simulation::getInstance().getPosition(i), 4, displayColor);
 		});
-	//Vector2f pos = Fluid::Simulation::getInstance().getPosition(0);
-	////Play::DrawFilledCircle(pos, 120.0f, Play::cRed, 0.5f);
-	////Play::DrawFilledCircle(pos, 5.0f, Play::cWhite);
-	//int GridPosX = (pos.x - offsetTo0X) / 100.0f;
-	//int GridPosY = (pos.y - offsetTo0Y) / 100.0f;
-	//int arrayPos = GridPosY * maxInstancesWidth + GridPosX;
-	////Play::DrawFilledCircle({ DISPLAY_WIDTH / 2.0f, DISPLAY_HEIGHT / 2.0f }, 10.0f, Play::cWhite, 1.0f);
-
-	//for (int i = 0; i < hashGridSize; i++)
-	//{
-	//	Play::DrawRect({ GridX[i] - 50.0f, GridY[i] - 50.0f }, { GridX[i] + 50.0f, GridY[i] + 50.0f }, Play::cRed);
-	//}
-	//Play::DrawRect({ GridX[arrayPos] - 50.0f, GridY[arrayPos] - 50.0f }, { GridX[arrayPos] + 50.0f, GridY[arrayPos] + 50.0f }, Play::cGrey);
 
 	double elapseOld = std::chrono::duration<double>(timeEndOld - timeStartOld).count();
 
