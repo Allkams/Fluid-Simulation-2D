@@ -24,8 +24,8 @@ double Min = 100.0;
 std::vector<uint32_t> circles;
 int size = 0;
 
-int ParticleAmmount = 1000;
-int RowSize = 100;
+int ParticleAmmount = 4032;
+int RowSize = 64;
 const short gap = 10;
 
 bool bPaused = true;

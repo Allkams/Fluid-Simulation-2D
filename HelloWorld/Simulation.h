@@ -12,9 +12,10 @@ namespace Fluid
 	struct SpatialStruct
 	{
 		uint32_t key;
+		uint32_t hash;
 		uint32_t index;
-		SpatialStruct() : key(UINT32_MAX), index(UINT32_MAX) {};
-		SpatialStruct(uint32_t inKey, uint32_t inIndex) : key(inKey), index(inIndex) {};
+		SpatialStruct() : key(UINT32_MAX), index(UINT32_MAX), hash(UINT32_MAX) {};
+		SpatialStruct(uint32_t inKey, uint32_t inHash, uint32_t inIndex) : key(inKey), index(inIndex), hash(inHash) {};
 	};
 
 	inline bool compareByKey(const SpatialStruct& a, const SpatialStruct& b)
@@ -36,29 +37,22 @@ namespace Fluid
 
 	private:
 
-		//void applyViscosity(float dt);
-		//void springAdjustment(float dt);
-		//void doubleDensityRelaxation(float dt);
-		//void springDisplacement(float dt);
-
-		//void updateNeighbours();
-
 		void updateDensities();
 
-		float CalculateDensity(Vector2f& point);
+		float CalculateDensity(uint32_t particleIndex);
 		float ConvertDensityToPressure(float density);
-		float CalculateProperty(int particleIndex);
 		float CalculateSharedPressure(float densityA, float densityB);
-		Vector2f& CalculatePropertyGradient(int particleIndex);
 		Vector2f& CalculatePressureForce(int particleIndex);
 
 		void UpdateSpatialLookup();
 		void SpatialNeighbors(int particleIndex, std::vector<uint32_t>& callback);
 
-		const float interactionRadius = 50.0f;
+		const float interactionRadius = 35.0f;
 		bool gravity = false;
-		const float TargetDensity = 2.75f;
-		const float pressureMultiplier = 0.5f;
+		const float TargetDensity = 0.1f;
+		const float pressureMultiplier = 200.0f;
+
+		const float DT = 1.0f / 60.0f;
 
 		std::vector<uint32_t> circleIDs;
 
@@ -71,6 +65,8 @@ namespace Fluid
 		std::vector<Vector2f> velocity;
 		std::vector<float> densities;
 		std::vector<float> particleProperties;
+
+		const Vector2f offsets[9] = { {-1,-1}, {0, -1 }, {1, -1}, {-1, 0}, {0,0}, {1, 0}, {-1, 1}, {0,1}, {1,1} };
 		
 	private:
 		Simulation() {};
