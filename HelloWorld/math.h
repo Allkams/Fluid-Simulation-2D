@@ -3,18 +3,18 @@
 
 namespace math
 {
-	static float SmoothingKernelPow2(float dist, float radius)
+	inline float SmoothingKernelPow2(float dist, float radius)
 	{
 		if (dist < radius)
 		{
-			float volume = 6.0f / (PLAY_PI * pow(radius, 4));
+			float volume = 6.0f / (PLAY_PI * (radius * radius * radius * radius));
 			float v = radius - dist;
 			return v * v * volume;
 		}
 		return 0;
 	}
 
-	static float SmoothingKernelPow3(float dist, float radius)
+	inline float SmoothingKernelPow3(float dist, float radius)
 	{
 		if (dist < radius)
 		{
@@ -26,7 +26,7 @@ namespace math
 	}
 
 
-	static float SmoothingKernelDerivativePow2(float dist, float radius)
+	inline float SmoothingKernelDerivativePow2(float dist, float radius)
 	{
 		if (dist < radius)
 		{
@@ -37,7 +37,7 @@ namespace math
 		return 0;
 	}
 
-	static float SmoothingKernelDerivativePow3(float dist, float radius)
+	inline float SmoothingKernelDerivativePow3(float dist, float radius)
 	{
 		if (dist < radius)
 		{

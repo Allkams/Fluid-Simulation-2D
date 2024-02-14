@@ -28,13 +28,13 @@ namespace Fluid
 	void Simulation::Update(float deltatime)
 	{
 
-		const float dampFactor = 0.95f;
+		const float dampFactor = 0.90f;
 		std::for_each(std::execution::par, circleIDs.begin(), circleIDs.end(),
 			[this, deltatime](uint32_t i)
 			{
 				if (gravity)
 				{
-					velocity[i].y += 9.82f * deltatime;
+					velocity[i].y += 98.2f * deltatime;
 				}
 				predictedPositions[i] = positions[i] + velocity[i] * DT;
 			});
@@ -124,8 +124,7 @@ namespace Fluid
 
 	float Simulation::getSpeedNormalized(int id)
 	{
-		
-		return velocity[id].Length() / 100.0f;
+		return std::clamp(velocity[id].Length(), 0.0f, 300.0f) / 300.0f;
 	}
 
 	double distance(const Render::particle& p1, const Render::particle& p2) {
@@ -197,7 +196,7 @@ namespace Fluid
 
 				Vector2f neighbourPos = predictedPositions[neighborIndex];
 				Vector2f offsetToNeighbour = neighbourPos - pos;
-				float sqrDist = offsetToNeighbour.LengthSqr();
+				float sqrDist = dot(offsetToNeighbour, offsetToNeighbour);
 
 				if (sqrDist > sqrRadius) continue;
 
@@ -257,7 +256,7 @@ namespace Fluid
 					//callback.push_back(index);
 					float dist = offsetToNeighbour.Length();
 					Vector2f dir = dist > 0 ? offsetToNeighbour / dist : Vector2f(0, 1);
-					float slope = math::SmoothingKernelDerivativePow2(dist, interactionRadius);
+					float slope = math::SmoothingKernelDerivativePow2(dist, interactionRadius) ;
 					float density = densities[neighborIndex];
 					float sharedPressure = CalculateSharedPressure(density, densities[particleIndex]);
 					pressureForce += dir * slope * sharedPressure / density;

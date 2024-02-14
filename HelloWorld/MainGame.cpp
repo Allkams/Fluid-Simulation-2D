@@ -8,11 +8,11 @@
 #include <thread>
 #include <execution>
 
-//const int DISPLAY_WIDTH = 1920;	//School
-//const int DISPLAY_HEIGHT = 1080;	//School
+const int DISPLAY_WIDTH = 1920;	//School
+const int DISPLAY_HEIGHT = 1080;	//School
 
-const int DISPLAY_WIDTH = 1920 * 0.92f;		//Laptop
-const int DISPLAY_HEIGHT = 1080 * 0.92f;		//Laptop
+//const int DISPLAY_WIDTH = 1920 * 0.92f;		//Laptop
+//const int DISPLAY_HEIGHT = 1080 * 0.92f;		//Laptop
 
 const int DISPLAY_SCALE = 1;
 
@@ -24,9 +24,9 @@ double Min = 100.0;
 std::vector<uint32_t> circles;
 int size = 0;
 
-int ParticleAmmount = 4032;
-int RowSize = 64;
-const short gap = 10;
+int ParticleAmmount = 64*64;
+int RowSize = 82;
+const short gap = 14;
 
 bool bPaused = true;
 
@@ -92,7 +92,7 @@ void MainGameEntry( PLAY_IGNORE_COMMAND_LINE )
 {
 	GenerateGrid();
 
-	Render::Boundary::instance().resize(1500, 900);
+	Render::Boundary::instance().resize(1600, 1000);
 	Render::Boundary::instance().move({ DISPLAY_WIDTH /2, DISPLAY_HEIGHT /2 });
 
 	int startX = Render::Boundary::instance().getTopLeft().x + 50;
@@ -166,7 +166,8 @@ bool MainGameUpdate(float elapsedTime)
 	std::for_each(std::execution::par, circles.begin(), circles.end(),
 		[blue, red](uint32_t i)
 		{
-			Vector3f color = (1.0f - Fluid::Simulation::getInstance().getSpeedNormalized(i)) * blue + Fluid::Simulation::getInstance().getSpeedNormalized(i) * red;
+			float normalized = Fluid::Simulation::getInstance().getSpeedNormalized(i);
+			Vector3f color = (1.0f - normalized) * blue + normalized * red;
 			Play::Colour displayColor = Play::Colour((int)color.x, (int)color.y, (int)color.w);
 			Play::DrawFilledCircle(Fluid::Simulation::getInstance().getPosition(i), 4, displayColor);
 		});
