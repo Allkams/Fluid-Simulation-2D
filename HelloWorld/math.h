@@ -47,4 +47,15 @@ namespace math
 		}
 		return 0;
 	}
+
+	inline float SmoothingKernelViscoPoly6(float dist, float radius)
+	{
+		if (dist < radius)
+		{
+			float scale = 4 / (PLAY_PI * pow(radius, 8));
+			float v = radius * radius - dist * dist;
+			return v * v * v * scale;
+		}
+		return 0;
+	}
 }

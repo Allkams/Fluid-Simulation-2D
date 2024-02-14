@@ -56,6 +56,14 @@ namespace Fluid
 		});
 
 		std::for_each(std::execution::par, circleIDs.begin(), circleIDs.end(),
+			[this, deltatime](uint32_t i)
+		{
+			Vector2f viscosityForce = CalculateViscosityForce(i);
+			Vector2f viscosityAcceration = viscosityForce / densities[i];
+			velocity[i] += viscosityAcceration * deltatime;
+		});
+
+		std::for_each(std::execution::par, circleIDs.begin(), circleIDs.end(),
 			[this, deltatime, dampFactor](uint32_t i)
 			{
 				positions[i] += deltatime * velocity[i];
@@ -195,13 +203,13 @@ namespace Fluid
 				//if (neighborIndex == particleIndex) continue;
 
 				Vector2f neighbourPos = predictedPositions[neighborIndex];
-				Vector2f offsetToNeighbour = neighbourPos - pos;
+				Vector2f offsetToNeighbour = (neighbourPos) - (pos);
 				float sqrDist = dot(offsetToNeighbour, offsetToNeighbour);
 
 				if (sqrDist > sqrRadius) continue;
 
 				float dist = distance(neighbourPos, pos);
-				density += math::SmoothingKernelPow2(dist, interactionRadius);
+				density += math::SmoothingKernelPow2(dist / 10.0f, interactionRadius / 10.0f);
 			}
 		}
 
@@ -248,15 +256,15 @@ namespace Fluid
 				if (neighborIndex == particleIndex) continue;
 
 				Vector2f neighbourPos = predictedPositions[neighborIndex];
-				Vector2f offsetToNeighbour = neighbourPos - pos;
-				float sqrDist = offsetToNeighbour.LengthSqr();
+				Vector2f offsetToNeighbour = (neighbourPos) - (pos);
+				float sqrDist = dot(offsetToNeighbour, offsetToNeighbour);
 
 				if (sqrDist <= sqrRadius)
 				{
 					//callback.push_back(index);
 					float dist = offsetToNeighbour.Length();
 					Vector2f dir = dist > 0 ? offsetToNeighbour / dist : Vector2f(0, 1);
-					float slope = math::SmoothingKernelDerivativePow2(dist, interactionRadius) ;
+					float slope = math::SmoothingKernelDerivativePow2(dist / 10.0f, interactionRadius / 10.0f) ;
 					float density = densities[neighborIndex];
 					float sharedPressure = CalculateSharedPressure(density, densities[particleIndex]);
 					pressureForce += dir * slope * sharedPressure / density;
@@ -265,6 +273,48 @@ namespace Fluid
 		}
 
 		return pressureForce;
+	}
+	Vector2f& Simulation::CalculateViscosityForce(int particleIndex)
+	{
+		Vector2f viscosityForce = { 0,0 };
+		Vector2f pos = predictedPositions[particleIndex];
+		Vector2f originCell = PositionToCellCoord(pos);
+		float sqrRadius = interactionRadius * interactionRadius;
+
+		for (int i = 0; i < 9; i++)
+		{
+			uint32_t hash = HashCell(originCell.x + offsets[i].x, originCell.y + offsets[i].y);
+			uint32_t key = GetKeyFromHash(hash, spatialLookup.size());
+			int currIndex = startIndices[key];
+
+			while (currIndex < circleIDs.size())
+			{
+				SpatialStruct index = spatialLookup[currIndex];
+				currIndex++;
+				if (index.key != key) break;
+
+
+				if (index.hash != hash) continue;
+
+				uint32_t neighborIndex = index.index;
+				if (neighborIndex == particleIndex) continue;
+
+				Vector2f neighbourPos = predictedPositions[neighborIndex];
+				Vector2f offsetToNeighbour = (neighbourPos) - (pos);
+				float sqrDist = offsetToNeighbour.LengthSqr();
+
+				if (sqrDist <= sqrRadius)
+				{
+					//callback.push_back(index);
+					float dist = offsetToNeighbour.Length();
+					float density = densities[neighborIndex];
+					float influence = math::SmoothingKernelViscoPoly6(dist, interactionRadius);
+					viscosityForce += (velocity[neighborIndex] - velocity[particleIndex] * influence);
+				}
+			}
+		}
+		viscosityForce *= viscosityStrength;
+		return viscosityForce;
 	}
 	//Might be incorrect...
 	void Simulation::UpdateSpatialLookup()
@@ -299,35 +349,6 @@ namespace Fluid
 				}
 			});
 
-	}
-
-	void Simulation::SpatialNeighbors(int particleIndex, std::vector<uint32_t>& callback)
-	{
-		Vector2f CellPos = PositionToCellCoord(positions[particleIndex]);
-		float sqrRadius = interactionRadius * interactionRadius;
-		
-		//Vector2f offsets[9] = { {-1,-1}, {0, -1 }, {1, -1}, {-1, 0}, {0,0}, {1, 0}, {-1, 1}, {0,1}, {1,1} };
-
-		for (auto& offset : offsets)
-		{
-			uint32_t key = GetKeyFromHash(HashCell(CellPos.x + offset.x, CellPos.y + offset.y), spatialLookup.size());
-			int cellStartIndex = startIndices[key];
-
-			for (int i = cellStartIndex; i < spatialLookup.size(); i++)
-			{
-				if (spatialLookup[i].key != key) break;
-
-
-				uint32_t index = spatialLookup[i].index;
-				if (particleIndex == index) continue;
-				float sqrDist = distanceSquared(positions[particleIndex], positions[index]);
-
-				if (sqrDist <= sqrRadius)
-				{
-					callback.push_back(index);
-				}
-			}
-		}
 	}
 
 }

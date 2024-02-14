@@ -46,14 +46,15 @@ namespace Fluid
 		float ConvertDensityToPressure(float density);
 		float CalculateSharedPressure(float densityA, float densityB);
 		Vector2f& CalculatePressureForce(int particleIndex);
+		Vector2f& CalculateViscosityForce(int particleIndex);
 
 		void UpdateSpatialLookup();
-		void SpatialNeighbors(int particleIndex, std::vector<uint32_t>& callback);
 
 		const float interactionRadius = 16.0f;
 		bool gravity = false;
-		const float TargetDensity = 0.1f;
-		const float pressureMultiplier = 15000.0f;
+		const float TargetDensity = 10.0f;
+		const float pressureMultiplier = 1600.0f;
+		const float viscosityStrength = 0.0075f;
 
 		const float DT = 1.0f / 60.0f;
 
